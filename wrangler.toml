@@ -16,7 +16,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "timzoo-db"
-database_id = "<YOUR_D1_DATABASE_ID>"  # 替换为实际的 D1 Database ID
+database_id = "589a35f0-a09e-4e3b-9d65-2ee8be0f097d"  # 替换为实际的 D1 Database ID
 
 # ============================================================
 # Cloudflare Pages 前端配置（可选）
