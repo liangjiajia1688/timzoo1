@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>探店日程管理系统</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;background:linear-gradient(135deg,#1A1C22 0%,#2e2e38 100%);min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .container{text-align:center;padding:24px}
+    .logo{font-size:72px;margin-bottom:16px}
+    h1{color:#fff;font-size:28px;font-weight:700;margin-bottom:8px}
+    p{color:rgba(255,255,255,0.6);font-size:15px;margin-bottom:40px}
+    .cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+    .card{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:28px 32px;width:220px;cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+    .card:hover{background:rgba(255,107,53,0.2);border-color:rgba(255,107,53,0.5);transform:translateY(-4px)}
+    .card-icon{font-size:40px;margin-bottom:12px}
+    .card-title{color:#fff;font-size:17px;font-weight:700;margin-bottom:6px}
+    .card-sub{color:rgba(255,255,255,0.5);font-size:13px}
+    .badge{display:inline-block;background:#FF6B35;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-top:10px}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">🍜</div>
+  <h1>探店日程管理系统</h1>
+  <p>达人博主专属 · 探店记录 · 账单管理 · 数据统计</p>
+  <div class="cards">
+    <a href="index.html" class="card">
+      <div class="card-icon">📱</div>
+      <div class="card-title">达人小程序</div>
+      <div class="card-sub">记录探店、查看账单、数据统计</div>
+      <div class="badge">前端入口</div>
+    </a>
+    <a href="admin.html" class="card">
+      <div class="card-icon">🏪</div>
+      <div class="card-title">管理后台</div>
+      <div class="card-sub">用户管理、数据汇总、批量导出</div>
+      <div class="badge">后台入口</div>
+    </a>
+  </div>
+  <p style="margin-top:32px;font-size:12px;color:rgba(255,255,255,0.3)">默认管理员账号：admin / admin123</p>
+</div>
+</body>
+</html>

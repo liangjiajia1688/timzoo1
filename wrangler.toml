@@ -1,0 +1,53 @@
+# ============================================================
+# TimZoo 探店管理 - Cloudflare 部署配置
+# 使用方式:
+#   1. 创建 D1 数据库: npx wrangler d1 create timzoo-db
+#   2. 初始化表结构: npx wrangler d1 execute timzoo-db --file=./schema.sql
+#   3. 本地开发:     npx wrangler dev
+#   4. 部署:         npx wrangler deploy
+# ============================================================
+
+name = "timzoo"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "timzoo-db"
+database_id = "<YOUR_D1_DATABASE_ID>"  # 替换为实际的 D1 Database ID
+
+# ============================================================
+# Cloudflare Pages 前端配置（可选）
+# 如果前端和后端分开部署，使用下面的 Pages 配置
+# 如果使用 Worker 统一托管静态文件，则不需要此段
+# ============================================================
+#
+# [pages]
+# build_output_dir = "../web-client/src"
+#
+# [[rules]]
+# type = "EsModule"
+# globs = ["**/*.js"]
+#
+# [[rules]]
+# type = "Text"
+# globs = ["**/*.html"]
+#
+
+# ============================================================
+# 开发环境变量
+# [env.development]
+# [[env.development.d1_databases]]
+# binding = "DB"
+# database_name = "timzoo-db"
+# database_id = "<YOUR_LOCAL_D1_ID>"
+
+# ============================================================
+# 生产环境变量
+# [env.production]
+# [[env.production.d1_databases]]
+# binding = "DB"
+# database_name = "timzoo-db"
+# database_id = "<YOUR_PRODUCTION_D1_ID>"
