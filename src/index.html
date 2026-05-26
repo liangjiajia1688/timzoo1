@@ -137,7 +137,6 @@
     .card-btn.fee-pending_fee { background: #FFF0EB; color: var(--primary); border-color: var(--primary); }
     .card-btn.fee-settled   { background: #E8F8EF; color: var(--success); border-color: var(--success); }
     .card-btn.photo-pending  { background: #F5F5F5; color: var(--pending); border-color: var(--pending); }
-    .card-btn.photo-done     { background: #E8F8EF; color: var(--success); border-color: var(--success); }
     .card-btn.photo-published { background: #F0EEFF; color: var(--purple); border-color: var(--purple); }
     .btn-toggle.active-purple { background: var(--purple); color: #fff; border-color: var(--purple); }
     .card-btn-edit { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
@@ -471,7 +470,6 @@
         <div class="home-filter-group">
           <div class="home-filter-chip active" data-filter-type="photo" data-value="all" onclick="setHomeFilter('photo', 'all', this)">全部出片</div>
           <div class="home-filter-chip" data-filter-type="photo" data-value="pending_shoot" onclick="setHomeFilter('photo', 'pending_shoot', this)">待出片</div>
-          <div class="home-filter-chip" data-filter-type="photo" data-value="photo-done" onclick="setHomeFilter('photo', 'photo-done', this)">已出片</div>
           <div class="home-filter-chip" data-filter-type="photo" data-value="published" onclick="setHomeFilter('photo', 'published', this)">已发布</div>
         </div>
       </div>
@@ -587,7 +585,6 @@
     <label class="form-label">出片状态</label>
     <div class="btn-group">
       <button type="button" class="btn-toggle" id="btn-photo-pending" onclick="setPhotoStatus('pending_shoot')">⏳ 待出片</button>
-      <button type="button" class="btn-toggle" id="btn-photo-done" onclick="setPhotoStatus('photo-done')">📸 已出片</button>
       <button type="button" class="btn-toggle" id="btn-photo-published" onclick="setPhotoStatus('published')">📤 已发布</button>
     </div>
     <input type="hidden" id="f-photo-status" value="pending_shoot" />
@@ -1060,7 +1057,7 @@ function goBack() { goPage(prevPage === 'add' ? 'list' : prevPage); }
 let editingId = null;
 let currentFilter = 'all';
 let homeFeeFilter = 'all';      // 首页收款筛选: all | pending_fee | settled
-let homePhotoFilter = 'all';    // 首页出片筛选: all | pending_shoot | photo-done | published
+let homePhotoFilter = 'all';    // 首页出片筛选: all | pending_shoot | published
 let currentDetailId = null;
 
 async function showAddModal(id = null) {
@@ -1133,7 +1130,6 @@ function setPhotos(val) {
 function setPhotoStatus(val) {
   document.getElementById('f-photo-status').value = val;
   document.getElementById('btn-photo-pending').className   = 'btn-toggle' + (val === 'pending_shoot'   ? ' active-gray' : '');
-  document.getElementById('btn-photo-done').className      = 'btn-toggle' + (val === 'photo-done'      ? ' active-green' : '');
   document.getElementById('btn-photo-published').className  = 'btn-toggle' + (val === 'published'       ? ' active-purple' : '');
 }
 function toggleExploreFields() {
@@ -1233,14 +1229,14 @@ async function toggleCardPhoto(id, btn) {
   const records = await Api.getRecords({});
   const rec = records.find(r => r.id === id);
   if (!rec) { showToast('记录不存在'); return; }
-  const cycle = { 'pending_shoot': 'photo-done', 'photo-done': 'published', published: 'pending_shoot' };
-  const newStatus = cycle[rec.photoStatus] || 'photo-done';
+  const cycle = { 'pending_shoot': 'published', 'published': 'pending_shoot' };
+  const newStatus = cycle[rec.photoStatus] || 'pending_shoot';
   rec.photoStatus = newStatus;
   rec.updatedAt = new Date().toISOString();
 
   const res = await Api.updateRecord(rec);
   if (res.ok && res.data.success) {
-    const toasts = { 'pending_shoot': '⏳ 已标记待出片', 'photo-done': '📸 出片完成！', published: '📤 已发布！' };
+    const toasts = { 'pending_shoot': '⏳ 已标记待出片', published: '📤 已发布！' };
     showToast(toasts[newStatus] || '📸 已更新');
     refreshHome();
     refreshList();
@@ -1270,8 +1266,6 @@ async function refreshHome() {
     }
     if (homePhotoFilter === 'pending_shoot') {
       myRecords = myRecords.filter(r => r.photoStatus === 'pending_shoot' && r.type === 'explore');
-    } else if (homePhotoFilter === 'photo-done') {
-      myRecords = myRecords.filter(r => r.photoStatus === 'photo-done');
     } else if (homePhotoFilter === 'published') {
       myRecords = myRecords.filter(r => r.photoStatus === 'published');
     }
@@ -1395,7 +1389,6 @@ function renderCard(r, compact) {
     : `<span class="tag" style="background:#FFF8E6;color:#D97706">🍜 探店</span>`;
   const photosLabel = r.photosCount === 1 ? '一条' : r.photosCount === 2 ? '二条' : (r.photosCount || 0) + '张';
   const feeSettled  = r.feeStatus === 'settled';
-  const photoDone   = r.photoStatus === 'photo-done';
   const photoPubed  = r.photoStatus === 'published';
   // 卡片内切换按钮（兼容 type 为空的情况，默认展示）
   const actionBtns = (r.type === 'explore' || r.type === 'brand' || !r.type) ? `
@@ -1403,12 +1396,12 @@ function renderCard(r, compact) {
       <button class="card-btn ${feeSettled ? 'fee-settled' : 'fee-pending_fee'}"
         onclick="toggleCardFee('${r.id}',this)">${feeSettled ? '✅ 已收款' : '💸 未收款'}</button>
       <button class="card-btn photo-${r.photoStatus || 'pending_shoot'}"
-        onclick="toggleCardPhoto('${r.id}',this)">${photoPubed ? '📤 已发布' : photoDone ? '📸 已出片' : '⏳ 待出片'}</button>
+        onclick="toggleCardPhoto('${r.id}',this)">${photoPubed ? '📤 已发布' : '⏳ 待出片'}</button>
       <button class="card-btn card-btn-edit" onclick="showAddModal('${r.id}')">✏️ 编辑</button>
     </div>` : '';
   return `<div class="record-card" id="card-${r.id}">
     <div class="record-card-header" onclick="openDetail('${r.id}')">
-      <div class="record-shop">${r.shopName || '探店记录'}</div>
+      <div class="record-shop">${r.shopName || (r.notes ? r.notes : r.date + ' 探店')}</div>
       <div class="record-date">${r.date}${r.arriveTime ? ' ' + r.arriveTime : ''}</div>
     </div>
     <div class="record-row" onclick="openDetail('${r.id}')">${typeBadge}
@@ -1430,7 +1423,7 @@ async function openDetail(id) {
   const records = await Api.getRecords({});
   const r = records.find(rec => rec.id === id);
   if (!r) return;
-  document.getElementById('modal-shop-name').textContent = (r.type === 'rest' || r.type === 'holiday') ? (r.type === 'rest' ? '😴 休息日' : '🎉 节假日') : (r.shopName || '店铺详情');
+  document.getElementById('modal-shop-name').textContent = (r.type === 'rest' || r.type === 'holiday') ? (r.type === 'rest' ? '😴 休息日' : '🎉 节假日') : (r.shopName || (r.notes ? r.notes : '店铺详情'));
   const typeLabel = { explore: '🍜 正常探店', brand: '🎯 品宣', rest: '😴 休息日', holiday: '🎉 节假日' };
   const photosLabel = r.photosCount === 1 ? '一条' : r.photosCount === 2 ? '二条' : (r.photosCount || 0) + '张';
   const rows = (r.type === 'rest' || r.type === 'holiday') ? [
@@ -1447,7 +1440,7 @@ async function openDetail(id) {
     ['实收款', `¥${r.actualAmount || 0}`],
     ['费用状态', r.feeStatus === 'settled' ? '✅ 已收款' : '💸 未收款'],
     ['交片数', photosLabel],
-    ['出片状态', r.photoStatus === 'photo-done' ? '📸 已出片' : r.photoStatus === 'published' ? '📤 已发布' : '⏳ 待出片'],
+    ['出片状态', r.photoStatus === 'published' ? '📤 已发布' : '⏳ 待出片'],
     ['短片状态', r.shortStatus === 'photo-done' ? '✅ 已完成' : '⏳ 待结算'],
     ['短片金额', `¥${r.shortFee || 0}`],
     ['备注', r.notes || '-'],
@@ -1539,7 +1532,7 @@ async function showExportModal() {
   myRecords.forEach(r => {
     csv += [r.date, r.arriveTime||'', r.shopName||'', r.teamMembers||'', r.fee||0, r.actualAmount||0,
       r.feeStatus==='settled'?'已收款':'未收款', r.photosCount||0, r.mainPhotos||0,
-      r.photoStatus==='photo-done'?'已出片':r.photoStatus==='published'?'已发布':'待出片', r.shortFee||0, r.notes||''].join(',') + '\n';
+      r.photoStatus==='published'?'已发布':'待出片', r.shortFee||0, r.notes||''].join(',') + '\n';
   });
   const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
