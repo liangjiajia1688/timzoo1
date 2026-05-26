@@ -1399,7 +1399,7 @@ function renderCard(r, compact) {
       <button class="card-btn photo-${r.photoStatus || 'pending_shoot'}"
         onclick="toggleCardPhoto('${r.id}',this)">${photoPubed ? '📤 已发布' : photoDone ? '📸 已出片' : '⏳ 待出片'}</button>
       <button class="card-btn card-btn-edit" onclick="showAddModal('${r.id}')">✏️ 编辑</button>
-    </div>` : '';
+    </div>` : `<div style="font-size:11px;color:#ff5500;text-align:center;padding:4px 0">⚠️ type=${r.type} 按钮被隐藏</div>`;
   return `<div class="record-card" id="card-${r.id}">
     <div class="record-card-header" onclick="openDetail('${r.id}')">
       <div class="record-shop">${r.shopName || '未知店铺'}</div>
