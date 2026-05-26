@@ -1204,9 +1204,10 @@ async function toggleCardFee(id, btn) {
     rec.actualAmount = cur === 0 ? (rec.fee || 0) : cur;
     rec.fee = 0; // 已收款则待结算清零
   } else {
-    // 切回未收款：实收款强制归零，恢复待结算费用
+    // 切回未收款：实收款归零，从实收恢复待结算费用
+    const curFee = parseFloat(rec.actualAmount) || 0;
+    rec.fee = curFee > 0 ? curFee : (rec.fee || 0);
     rec.actualAmount = 0;
-    // fee 保持原值（用户编辑时填写的）
   }
   rec.updatedAt = new Date().toISOString();
 
