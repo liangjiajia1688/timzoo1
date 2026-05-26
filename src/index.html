@@ -1199,12 +1199,14 @@ async function toggleCardFee(id, btn) {
   const goingToSettled = rec.feeStatus !== 'settled';
   rec.feeStatus = goingToSettled ? 'settled' : 'pending_fee';
   if (goingToSettled) {
-    // 切为已收款：若实收款为0或空，自动填入待结算费用
+    // 切为已收款：待结算费用→0（已收到钱了），实收款=原待结算费用
     const cur = parseFloat(rec.actualAmount) || 0;
     rec.actualAmount = cur === 0 ? (rec.fee || 0) : cur;
+    rec.fee = 0; // 已收款则待结算清零
   } else {
-    // 切回未收款：实收款强制归零
+    // 切回未收款：实收款强制归零，恢复待结算费用
     rec.actualAmount = 0;
+    // fee 保持原值（用户编辑时填写的）
   }
   rec.updatedAt = new Date().toISOString();
 
@@ -1406,8 +1408,10 @@ function renderCard(r, compact) {
       ${r.teamMembers ? `<span class="tag tag-pending">👥 ${r.teamMembers}</span>` : ''}
     </div>
     <div class="record-footer" onclick="openDetail('${r.id}')">
-      <div class="record-meta">待结算 ¥${r.fee || 0} | 交片 ${photosLabel}</div>
-      <div class="record-amount">实收 ¥${r.actualAmount || 0}</div>
+      ${feeSettled
+        ? `<div class="record-meta">✅ 已收款 | 交片 ${photosLabel}</div><div class="record-amount">实收 ¥${r.actualAmount || 0}</div>`
+        : `<div class="record-meta">待结算 ¥${r.fee || 0} | 交片 ${photosLabel}</div><div class="record-amount" style="opacity:0.4">实收 ¥0</div>`
+      }
     </div>
     ${actionBtns}
   </div>`;
@@ -1424,6 +1428,7 @@ async function openDetail(id) {
   document.getElementById('modal-shop-name').textContent = (r.type === 'rest' || r.type === 'holiday') ? (r.type === 'rest' ? '😴 休息日' : '🎉 节假日') : (r.storeName || (r.notes ? r.notes : '店铺详情'));
   const typeLabel = { explore: '🍜 正常探店', brand: '🎯 品宣', rest: '😴 休息日', holiday: '🎉 节假日' };
   const photosLabel = r.photosCount === 1 ? '一条' : r.photosCount === 2 ? '二条' : (r.photosCount || 0) + '张';
+  const feeSettled = r.feeStatus === 'settled';
   const rows = (r.type === 'rest' || r.type === 'holiday') ? [
     ['日期', r.date],
     ['类型', typeLabel[r.type] || r.type],
@@ -1434,9 +1439,9 @@ async function openDetail(id) {
     ['到店时间', r.arriveTime || '-'],
     ['商家店名', r.storeName || '-'],
     ['组队人员', r.teamMembers || '-'],
-    ['待结算费用', `¥${r.fee || 0}`],
-    ['实收款', `¥${r.actualAmount || 0}`],
-    ['费用状态', r.feeStatus === 'settled' ? '✅ 已收款' : '💸 未收款'],
+    [feeSettled ? '待结算费用' : '💰 待结算费用', feeSettled ? '<span style="color:#999;text-decoration:line-through">¥' + (r.fee || 0) + '</span>' : ('¥' + (r.fee || 0))],
+    [feeSettled ? '✅ 实收款' : '实收款', feeSettled ? ('¥' + (r.actualAmount || 0)) : '<span style="color:#999">¥0</span>'],
+    ['费用状态', feeSettled ? '✅ 已收款' : '💸 未收款'],
     ['交片数', photosLabel],
     ['出片状态', r.photoStatus === 'published' ? '📤 已发布' : '⏳ 待出片'],
     ['短片状态', r.shortStatus === 'photo-done' ? '✅ 已完成' : '⏳ 待结算'],
