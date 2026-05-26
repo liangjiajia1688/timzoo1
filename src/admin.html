@@ -617,7 +617,9 @@
 // 所有数据操作通过 Cloudflare Workers API 完成
 // ============================================================
 
-const API = 'http://127.0.0.1:8787'; // 本地开发地址，部署时改为 window.location.origin
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://127.0.0.1:8787'
+  : window.location.origin;
 
 /** 通用 API 请求封装 */
 async function api(path, options = {}) {
