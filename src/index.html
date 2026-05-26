@@ -118,7 +118,7 @@
       display: inline-flex; align-items: center; gap: 3px;
       font-size: 12px; padding: 3px 8px; border-radius: 20px; font-weight: 500;
     }
-    .tag-unsettled { background: #FFF0EB; color: var(--primary); }
+    .tag-pending_fee { background: #FFF0EB; color: var(--primary); }
     .tag-settled { background: #E8F8EF; color: var(--success); }
     .tag-pending { background: #F5F5F5; color: var(--pending); }
     .tag-processing { background: #FFF8E6; color: var(--warning); }
@@ -134,7 +134,7 @@
       cursor: pointer; transition: all 0.18s; text-align: center; white-space: nowrap;
     }
     .card-btn:active { transform: scale(0.96); }
-    .card-btn.fee-unsettled { background: #FFF0EB; color: var(--primary); border-color: var(--primary); }
+    .card-btn.fee-pending_fee { background: #FFF0EB; color: var(--primary); border-color: var(--primary); }
     .card-btn.fee-settled   { background: #E8F8EF; color: var(--success); border-color: var(--success); }
     .card-btn.photo-pending  { background: #F5F5F5; color: var(--pending); border-color: var(--pending); }
     .card-btn.photo-done     { background: #E8F8EF; color: var(--success); border-color: var(--success); }
@@ -261,7 +261,7 @@
     /* === STATUS BADGE === */
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
     .status-dot.settled { background: var(--success); }
-    .status-dot.unsettled { background: var(--danger); }
+    .status-dot.pending_fee { background: var(--danger); }
     .status-dot.pending { background: var(--warning); }
 
     .loading { text-align: center; padding: 32px; color: var(--text3); font-size: 14px; }
@@ -447,7 +447,7 @@
           <div class="stat-label">实收金额</div>
         </div>
         <div class="stat-card">
-          <div class="stat-num" id="stat-unsettled" style="color:var(--warning)">0</div>
+          <div class="stat-num" id="stat-pending_fee" style="color:var(--warning)">0</div>
           <div class="stat-label">待结算</div>
         </div>
       </div>
@@ -478,7 +478,7 @@
       </div>
       <div class="filter-bar" id="filter-bar">
         <div class="filter-chip active" onclick="setFilter('all', this)">全部</div>
-        <div class="filter-chip" onclick="setFilter('unsettled', this)">未结算</div>
+        <div class="filter-chip" onclick="setFilter('pending_fee', this)">未结算</div>
         <div class="filter-chip" onclick="setFilter('settled', this)">已结算</div>
         <div class="filter-chip" onclick="setFilter('pending_shoot', this)">待出片</div>
       <div class="filter-chip" onclick="setFilter('published', this)">已发布</div>
@@ -543,10 +543,10 @@
           <div class="form-group">
             <label class="form-label">费用结算状态</label>
             <div class="btn-group">
-              <button type="button" class="btn-toggle active-orange" id="btn-fee-unsettled" onclick="setFeeStatus('unsettled')">💸 未收款</button>
+              <button type="button" class="btn-toggle active-orange" id="btn-fee-pending_fee" onclick="setFeeStatus('pending_fee')">💸 未收款</button>
               <button type="button" class="btn-toggle" id="btn-fee-settled" onclick="setFeeStatus('settled')">✅ 已收款</button>
             </div>
-            <input type="hidden" id="f-fee-status" value="unsettled" />
+            <input type="hidden" id="f-fee-status" value="pending_fee" />
           </div>
         </div>
         <div class="form-section" id="photo-fields">
@@ -562,11 +562,11 @@
       <div class="form-group">
     <label class="form-label">出片状态</label>
     <div class="btn-group">
-      <button type="button" class="btn-toggle" id="btn-photo-pending" onclick="setPhotoStatus('pending')">⏳ 待出片</button>
-      <button type="button" class="btn-toggle" id="btn-photo-done" onclick="setPhotoStatus('done')">📸 已出片</button>
+      <button type="button" class="btn-toggle" id="btn-photo-pending" onclick="setPhotoStatus('pending_shoot')">⏳ 待出片</button>
+      <button type="button" class="btn-toggle" id="btn-photo-done" onclick="setPhotoStatus('photo-done')">📸 已出片</button>
       <button type="button" class="btn-toggle" id="btn-photo-published" onclick="setPhotoStatus('published')">📤 已发布</button>
     </div>
-    <input type="hidden" id="f-photo-status" value="pending" />
+    <input type="hidden" id="f-photo-status" value="pending_shoot" />
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -611,7 +611,7 @@
           <div class="stats-grid-label">总交片数</div>
         </div>
         <div class="stats-grid-card">
-          <div class="stats-grid-num" id="s-unsettled" style="color:var(--warning)">¥0</div>
+          <div class="stats-grid-num" id="s-pending_fee" style="color:var(--warning)">¥0</div>
           <div class="stats-grid-label">待结算金额</div>
         </div>
       </div>
@@ -1061,10 +1061,10 @@ function clearForm() {
   document.getElementById('f-team').value = '';
   document.getElementById('f-fee').value = '';
   document.getElementById('f-actual').value = '';
-  setFeeStatus('unsettled');
+  setFeeStatus('pending_fee');
   setPhotos(0);
-  setPhotoStatus('pending');
-  document.getElementById('f-short-status').value = 'pending';
+  setPhotoStatus('pending_shoot');
+  document.getElementById('f-short-status').value = 'pending_shoot';
   document.getElementById('f-short-fee').value = '';
   document.getElementById('f-notes').value = '';
   toggleExploreFields();
@@ -1078,10 +1078,10 @@ function fillForm(rec) {
   document.getElementById('f-team').value = rec.teamMembers || '';
   document.getElementById('f-fee').value = rec.fee || '';
   document.getElementById('f-actual').value = rec.actualAmount || '';
-  setFeeStatus(rec.feeStatus || 'unsettled');
+  setFeeStatus(rec.feeStatus || 'pending_fee');
   setPhotos(rec.photosCount || 0);
-  setPhotoStatus(rec.photoStatus || 'pending');
-  document.getElementById('f-short-status').value = rec.shortStatus || 'pending';
+  setPhotoStatus(rec.photoStatus || 'pending_shoot');
+  document.getElementById('f-short-status').value = rec.shortStatus || 'pending_shoot';
   document.getElementById('f-short-fee').value = rec.shortFee || '';
   document.getElementById('f-notes').value = rec.notes || '';
   toggleExploreFields();
@@ -1094,7 +1094,7 @@ document.getElementById('f-type').addEventListener('change', toggleExploreFields
 // ============================================================
 function setFeeStatus(val) {
   document.getElementById('f-fee-status').value = val;
-  document.getElementById('btn-fee-unsettled').className = 'btn-toggle' + (val === 'unsettled' ? ' active-orange' : '');
+  document.getElementById('btn-fee-pending_fee').className = 'btn-toggle' + (val === 'pending_fee' ? ' active-orange' : '');
   document.getElementById('btn-fee-settled').className = 'btn-toggle' + (val === 'settled' ? ' active-green' : '');
 }
 
@@ -1106,9 +1106,9 @@ function setPhotos(val) {
 
 function setPhotoStatus(val) {
   document.getElementById('f-photo-status').value = val;
-  document.getElementById('btn-photo-pending').className   = 'btn-toggle' + (val === 'pending'   ? ' active-gray' : '');
-  document.getElementById('btn-photo-done').className      = 'btn-toggle' + (val === 'done'      ? ' active-green' : '');
-  document.getElementById('btn-photo-published').className  = 'btn-toggle' + (val === 'published' ? ' active-purple' : '');
+  document.getElementById('btn-photo-pending').className   = 'btn-toggle' + (val === 'pending_shoot'   ? ' active-gray' : '');
+  document.getElementById('btn-photo-done').className      = 'btn-toggle' + (val === 'photo-done'      ? ' active-green' : '');
+  document.getElementById('btn-photo-published').className  = 'btn-toggle' + (val === 'published'       ? ' active-purple' : '');
 }
 function toggleExploreFields() {
   const type = document.getElementById('f-type').value;
@@ -1177,7 +1177,7 @@ async function toggleCardFee(id, btn) {
   const rec = records.find(r => r.id === id);
   if (!rec) { showToast('记录不存在'); return; }
   const goingToSettled = rec.feeStatus !== 'settled';
-  rec.feeStatus = goingToSettled ? 'settled' : 'unsettled';
+  rec.feeStatus = goingToSettled ? 'settled' : 'pending_fee';
   if (goingToSettled) {
     // 切为已收款：若实收款为0或空，自动填入待结算费用
     const cur = parseFloat(rec.actualAmount) || 0;
@@ -1207,14 +1207,14 @@ async function toggleCardPhoto(id, btn) {
   const records = await Api.getRecords({});
   const rec = records.find(r => r.id === id);
   if (!rec) { showToast('记录不存在'); return; }
-  const cycle = { pending: 'done', done: 'published', published: 'pending' };
-  const newStatus = cycle[rec.photoStatus] || 'done';
+  const cycle = { 'pending_shoot': 'photo-done', 'photo-done': 'published', published: 'pending_shoot' };
+  const newStatus = cycle[rec.photoStatus] || 'photo-done';
   rec.photoStatus = newStatus;
   rec.updatedAt = new Date().toISOString();
 
   const res = await Api.updateRecord(rec);
   if (res.ok && res.data.success) {
-    const toasts = { pending: '⏳ 已标记待出片', done: '📸 出片完成！', published: '📤 已发布！' };
+    const toasts = { 'pending_shoot': '⏳ 已标记待出片', 'photo-done': '📸 出片完成！', published: '📤 已发布！' };
     showToast(toasts[newStatus] || '📸 已更新');
     refreshHome();
     refreshList();
@@ -1240,8 +1240,8 @@ async function refreshHome() {
     document.getElementById('stat-total').textContent = monthly.filter(r => r.type === 'explore').length;
     const income = monthly.reduce((s, r) => s + (r.actualAmount || 0), 0);
     document.getElementById('stat-income').textContent = '¥' + income;
-    const unsettled = monthly.filter(r => r.feeStatus === 'unsettled' && r.type === 'explore').length;
-    document.getElementById('stat-unsettled').textContent = unsettled;
+    const pending_fee = monthly.filter(r => r.feeStatus === 'pending_fee' && r.type === 'explore').length;
+    document.getElementById('stat-pending_fee').textContent = pending_fee;
 
     // 近期5条（最新）
     const recent = [...myRecords].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 5);
@@ -1276,9 +1276,9 @@ async function refreshList() {
     let myRecords = records.filter(r => r.userId === user.id);
     myRecords.sort((a,b) => b.date.localeCompare(a.date));
 
-    if (currentFilter === 'unsettled') myRecords = myRecords.filter(r => r.feeStatus === 'unsettled' && r.type === 'explore');
+    if (currentFilter === 'pending_fee') myRecords = myRecords.filter(r => r.feeStatus === 'pending_fee' && r.type === 'explore');
     else if (currentFilter === 'settled') myRecords = myRecords.filter(r => r.feeStatus === 'settled');
-    else if (currentFilter === 'pending_shoot') myRecords = myRecords.filter(r => r.photoStatus === 'pending' && r.type === 'explore');
+    else if (currentFilter === 'pending_shoot') myRecords = myRecords.filter(r => r.photoStatus === 'pending_shoot' && r.type === 'explore');
     else if (currentFilter === 'published') myRecords = myRecords.filter(r => r.photoStatus === 'published');
     else if (currentFilter === 'rest') myRecords = myRecords.filter(r => r.type === 'rest');
 
@@ -1331,14 +1331,14 @@ function renderCard(r, compact) {
     : `<span class="tag" style="background:#FFF8E6;color:#D97706">🍜 探店</span>`;
   const photosLabel = r.photosCount === 1 ? '一条' : r.photosCount === 2 ? '二条' : (r.photosCount || 0) + '张';
   const feeSettled  = r.feeStatus === 'settled';
-  const photoDone   = r.photoStatus === 'done';
+  const photoDone   = r.photoStatus === 'photo-done';
   const photoPubed  = r.photoStatus === 'published';
   // 卡片内切换按钮
   const actionBtns = (r.type === 'explore' || r.type === 'brand') ? `
     <div class="card-actions" onclick="event.stopPropagation()">
-      <button class="card-btn ${feeSettled ? 'fee-settled' : 'fee-unsettled'}"
+      <button class="card-btn ${feeSettled ? 'fee-settled' : 'fee-pending_fee'}"
         onclick="toggleCardFee('${r.id}',this)">${feeSettled ? '✅ 已收款' : '💸 未收款'}</button>
-      <button class="card-btn photo-${r.photoStatus || 'pending'}"
+      <button class="card-btn photo-${r.photoStatus || 'pending_shoot'}"
         onclick="toggleCardPhoto('${r.id}',this)">${photoPubed ? '📤 已发布' : photoDone ? '📸 已出片' : '⏳ 待出片'}</button>
       <button class="card-btn card-btn-edit" onclick="showAddModal('${r.id}')">✏️ 编辑</button>
     </div>` : '';
@@ -1383,8 +1383,8 @@ async function openDetail(id) {
     ['实收款', `¥${r.actualAmount || 0}`],
     ['费用状态', r.feeStatus === 'settled' ? '✅ 已收款' : '💸 未收款'],
     ['交片数', photosLabel],
-    ['出片状态', r.photoStatus === 'done' ? '📸 已出片' : r.photoStatus === 'published' ? '📤 已发布' : '⏳ 待出片'],
-    ['短片状态', r.shortStatus === 'done' ? '✅ 已完成' : '⏳ 待结算'],
+    ['出片状态', r.photoStatus === 'photo-done' ? '📸 已出片' : r.photoStatus === 'published' ? '📤 已发布' : '⏳ 待出片'],
+    ['短片状态', r.shortStatus === 'photo-done' ? '✅ 已完成' : '⏳ 待结算'],
     ['短片金额', `¥${r.shortFee || 0}`],
     ['备注', r.notes || '-'],
   ];
@@ -1424,8 +1424,8 @@ async function refreshStats() {
     document.getElementById('s-income').textContent = '¥' + income;
     const photos = myRecords.reduce((s, r) => s + (r.photosCount || 0), 0);
     document.getElementById('s-photos').textContent = photos;
-    const unsettled = myRecords.filter(r => r.feeStatus === 'unsettled').reduce((s,r) => s + (r.fee || 0), 0);
-    document.getElementById('s-unsettled').textContent = '¥' + unsettled;
+    const pending_fee = myRecords.filter(r => r.feeStatus === 'pending_fee').reduce((s,r) => s + (r.fee || 0), 0);
+    document.getElementById('s-pending_fee').textContent = '¥' + pending_fee;
 
     // Weekly bar chart for current month
     const now = new Date();
@@ -1456,7 +1456,7 @@ async function refreshStats() {
     document.getElementById('settle-chart').innerHTML = `
       <div style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border-radius:3px;background:var(--success);display:inline-block"></span><span style="font-size:14px">已收款 <b>${settled}</b>条（${Math.round(settled/total*100)}%）</span></div>
       <div style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border-radius:3px;background:var(--warning);display:inline-block"></span><span style="font-size:14px">未收款 <b>${unsetCount}</b>条（${Math.round(unsetCount/total*100)}%）</span></div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span style="font-size:13px;color:var(--text3)">合计：¥${income} 实收 | ¥${unsettled} 待结</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span style="font-size:13px;color:var(--text3)">合计：¥${income} 实收 | ¥${pending_fee} 待结</span></div>
     `;
   } catch (e) {
     console.error('refreshStats error:', e);
@@ -1475,7 +1475,7 @@ async function showExportModal() {
   myRecords.forEach(r => {
     csv += [r.date, r.arriveTime||'', r.shopName||'', r.teamMembers||'', r.fee||0, r.actualAmount||0,
       r.feeStatus==='settled'?'已收款':'未收款', r.photosCount||0, r.mainPhotos||0,
-      r.photoStatus==='done'?'已出片':r.photoStatus==='published'?'已发布':'待出片', r.shortFee||0, r.notes||''].join(',') + '\n';
+      r.photoStatus==='photo-done'?'已出片':r.photoStatus==='published'?'已发布':'待出片', r.shortFee||0, r.notes||''].join(',') + '\n';
   });
   const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
