@@ -8,8 +8,7 @@
  * 必须配置: Settings → Functions → Bindings → D1 Database (变量名 DB)
  */
 
-export default {
-  async fetch(request, env) {
+export const onRequest = async ({ request, env }) => {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '*';
 
@@ -81,7 +80,7 @@ export default {
       return addCorsHeaders(response, origin);
 
     } catch (err) {
-      console.error('Worker Error:', err);
+      console.error('API Error:', err);
       return addCorsHeaders(json({ error: err.message }, 500), origin);
     }
   }
