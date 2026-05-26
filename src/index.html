@@ -908,7 +908,7 @@ const Api = {
     return this.req('PUT', '/api/records', rec);
   },
   async deleteRecord(id) {
-    return this.req('DELETE', '/api/records?id=' + id);
+    return this.req('DELETE', '/api/records', { id });
   },
 
   // Orders
