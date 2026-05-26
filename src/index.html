@@ -1635,6 +1635,8 @@ function updateVipUI() {
       } else if (!user.memberExpire || user.memberExpire === '2099-12-31') {
         expireText = '永久有效';
       } else {
+        expireText = user.memberExpire || 'VIP会员';
+      }
       document.getElementById('vip-banner-title').textContent = '🌟 VIP会员';
       document.getElementById('vip-banner-sub').textContent = expireText;
       document.getElementById('vip-banner-btn').textContent = '已开通';
