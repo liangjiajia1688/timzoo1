@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS records (
   arriveTime   TEXT,
   teamMembers  TEXT,
   feeStatus    TEXT DEFAULT 'pending_fee' CHECK(feeStatus IN ('pending_fee', 'settled')),
-  photoStatus  TEXT DEFAULT 'pending_shoot' CHECK(photoStatus IN ('pending_shoot', 'photo-done')),
+  photoStatus  TEXT DEFAULT 'pending_shoot' CHECK(photoStatus IN ('pending_shoot', 'photo-done', 'published')),
   actualAmount REAL DEFAULT 0,
   fee          REAL DEFAULT 0,
   actualFee    REAL DEFAULT 0,
