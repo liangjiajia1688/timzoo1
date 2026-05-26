@@ -1097,7 +1097,7 @@ function fillForm(rec) {
   document.getElementById('f-date').value = rec.date || '';
   document.getElementById('f-arrive').value = rec.arriveTime || '';
   document.getElementById('f-type').value = rec.type || 'explore';
-  document.getElementById('f-shop').value = rec.shopName || '';
+  document.getElementById('f-shop').value = rec.storeName || '';
   document.getElementById('f-team').value = rec.teamMembers || '';
   document.getElementById('f-fee').value = rec.fee || '';
   document.getElementById('f-actual').value = rec.actualAmount || '';
@@ -1154,7 +1154,7 @@ async function saveRecord() {
     date,
     arriveTime: document.getElementById('f-arrive').value,
     type,
-    shopName: document.getElementById('f-shop').value.trim(),
+    storeName: document.getElementById('f-shop').value.trim(),
     teamMembers: document.getElementById('f-team').value.trim(),
     fee: parseFloat(document.getElementById('f-fee').value) || 0,
     actualAmount: parseFloat(document.getElementById('f-actual').value) || 0,
@@ -1401,7 +1401,7 @@ function renderCard(r, compact) {
     </div>` : '';
   return `<div class="record-card" id="card-${r.id}">
     <div class="record-card-header" onclick="openDetail('${r.id}')">
-      <div class="record-shop">${r.shopName || (r.notes ? r.notes : r.date + ' 探店')}</div>
+      <div class="record-shop">${r.storeName || (r.notes ? r.notes : r.date + ' 探店')}</div>
       <div class="record-date">${r.date}${r.arriveTime ? ' ' + r.arriveTime : ''}</div>
     </div>
     <div class="record-row" onclick="openDetail('${r.id}')">${typeBadge}
@@ -1423,7 +1423,7 @@ async function openDetail(id) {
   const records = await Api.getRecords({});
   const r = records.find(rec => rec.id === id);
   if (!r) return;
-  document.getElementById('modal-shop-name').textContent = (r.type === 'rest' || r.type === 'holiday') ? (r.type === 'rest' ? '😴 休息日' : '🎉 节假日') : (r.shopName || (r.notes ? r.notes : '店铺详情'));
+  document.getElementById('modal-shop-name').textContent = (r.type === 'rest' || r.type === 'holiday') ? (r.type === 'rest' ? '😴 休息日' : '🎉 节假日') : (r.storeName || (r.notes ? r.notes : '店铺详情'));
   const typeLabel = { explore: '🍜 正常探店', brand: '🎯 品宣', rest: '😴 休息日', holiday: '🎉 节假日' };
   const photosLabel = r.photosCount === 1 ? '一条' : r.photosCount === 2 ? '二条' : (r.photosCount || 0) + '张';
   const rows = (r.type === 'rest' || r.type === 'holiday') ? [
@@ -1434,7 +1434,7 @@ async function openDetail(id) {
     ['日期', r.date],
     ['类型', typeLabel[r.type] || r.type],
     ['到店时间', r.arriveTime || '-'],
-    ['商家店名', r.shopName || '-'],
+    ['商家店名', r.storeName || '-'],
     ['组队人员', r.teamMembers || '-'],
     ['待结算费用', `¥${r.fee || 0}`],
     ['实收款', `¥${r.actualAmount || 0}`],
@@ -1530,7 +1530,7 @@ async function showExportModal() {
   const myRecords = records.filter(r => r.userId === user.id && r.type === 'explore');
   let csv = '日期,到店时间,商家店名,组队人员,待结算费用,实收款,费用状态,交片数,正片数,出片状态,短片金额,备注\n';
   myRecords.forEach(r => {
-    csv += [r.date, r.arriveTime||'', r.shopName||'', r.teamMembers||'', r.fee||0, r.actualAmount||0,
+    csv += [r.date, r.arriveTime||'', r.storeName||'', r.teamMembers||'', r.fee||0, r.actualAmount||0,
       r.feeStatus==='settled'?'已收款':'未收款', r.photosCount||0, r.mainPhotos||0,
       r.photoStatus==='published'?'已发布':'待出片', r.shortFee||0, r.notes||''].join(',') + '\n';
   });
