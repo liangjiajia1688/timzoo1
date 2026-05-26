@@ -119,7 +119,7 @@ async function readBody(req) {
 
 async function handleLogin(req, env) {
   const { username, password } = await readBody(req);
-  
+
   const result = await env.DB.prepare(
     'SELECT id, username, realname, role, memberType, memberExpire, createdAt FROM users WHERE username = ? AND password = ?'
   ).bind(username, password).first();
@@ -169,7 +169,7 @@ function handleUserInfo(env, userId, user) {
 
 async function handleUserUpdate(req, env, userId, user) {
   if (!user) return json({ success: false, message: '用户不存在' });
-  
+
   const body = await readBody(req);
   const allowedFields = ['realname', 'phone', 'avatar'];
   const updates = [];
@@ -230,7 +230,7 @@ async function handleAddRecord(req, env, userId, user) {
   const recId = 'rec_' + Date.now();
 
   await env.DB.prepare(`
-    INSERT INTO records (id, userId, storeName, address, category, date, 
+    INSERT INTO records (id, userId, storeName, address, category, date,
       feeStatus, photoStatus, actualAmount, fee, actualFee, notes, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
@@ -258,7 +258,7 @@ async function handleUpdateRecord(req, env, user) {
     }
   }
 
-  const fields = ['storeName', 'address', 'category', 'date', 'feeStatus', 'photoStatus', 
+  const fields = ['storeName', 'address', 'category', 'date', 'feeStatus', 'photoStatus',
                   'actualAmount', 'fee', 'actualFee', 'notes', 'status'];
   const sets = [];
   const values = [];
@@ -371,11 +371,11 @@ async function handleAdminRecords(env, url) {
   if (storeName) { sql += ' AND r.storeName LIKE ?'; params.push('%' + storeName + '%'); }
 
   sql += ' ORDER BY r.date DESC';
-  
+
   const results = params.length > 0
     ? await env.DB.prepare(sql).bind(...params).all()
     : await env.DB.prepare(sql).all();
-  
+
   return json({ success: true, records: results.results || [] });
 }
 
@@ -461,11 +461,11 @@ async function handleAdminStats(env) {
   const totalRecords = await env.DB.prepare("SELECT COUNT(*) as count FROM records").first();
   const totalOrders = await env.DB.prepare("SELECT COUNT(*) as count FROM orders").first();
   const vipCount = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE memberType != 'normal'").first();
-  
+
   // 本月新增记录
   const monthStart = new Date().toISOString().slice(0, 7) + '-01';
   const monthRecords = await env.DB.prepare("SELECT COUNT(*) as count FROM records WHERE date >= ?").bind(monthStart).first();
-  
+
   // 费用统计
   const feeStats = await env.DB.prepare(
     "SELECT COALESCE(SUM(actualFee), 0) as totalFees, COALESCE(SUM(actualAmount), 0) as totalAmounts FROM records"
