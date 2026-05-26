@@ -83,7 +83,6 @@ export const onRequest = async ({ request, env }) => {
       console.error('API Error:', err);
       return addCorsHeaders(json({ error: err.message }, 500), origin);
     }
-  }
 }
 
 // ============================================================
