@@ -8,7 +8,9 @@
 # ============================================================
 
 name = "timzoo"
-# main = "worker.js"  ← 注释掉，避免与 Pages 静态文件托管冲突
+# 注意: 部署到 Pages 时，不要设置 main 字段
+# main 由 Pages 自动从 functions/ 目录加载
+# main = "worker.js"  ← 已注释，避免与 Pages 静态文件托管冲突
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
@@ -16,7 +18,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "timzoo-db"
-database_id = "589a35f0-a09e-4e3b-9d65-2ee8be0f097d"  # 替换为实际的 D1 Database ID
+database_id = "589a35f0-a09e-4e3b-9d65-2ee8be0f097d"  # timzoo-db production
 
 # ============================================================
 # Cloudflare Pages 前端配置（可选）
