@@ -141,10 +141,8 @@ async function handleRegister(req, env) {
   }
 
   const userId = 'user_' + Date.now();
-  // 新用户注册即送1年VIP
-  const expireDate = new Date();
-  expireDate.setFullYear(expireDate.getFullYear() + 1);
-  const expireStr = expireDate.toISOString().split('T')[0];
+  // 注册即送 VIP，有效期至 2099-12-01
+  const expireStr = '2099-12-01';
 
   await env.DB.prepare(`
     INSERT INTO users (id, username, password, realname, role, memberType, memberExpire, createdAt)
@@ -225,14 +223,18 @@ async function handleAddRecord(req, env, userId, user) {
   const recId = 'rec_' + Date.now();
 
   await env.DB.prepare(`
-    INSERT INTO records (id, userId, storeName, address, category, date,
-      feeStatus, photoStatus, actualAmount, fee, actualFee, notes, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO records (id, userId, storeName, type, date,
+      arriveTime, teamMembers, feeStatus, photoStatus, photosCount, mainPhotos,
+      actualAmount, fee, actualFee, shortStatus, shortFee, notes, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
-    recId, userId, body.storeName || '', body.address || '', body.category || '',
-    body.date || '', body.feeStatus || 'pending_fee', body.photoStatus || 'pending_shoot',
-    body.actualAmount || 0, body.fee || 0, body.actualFee || 0, body.notes || '',
-    body.status || 'active'
+    recId, userId, body.storeName || '', body.type || 'explore', body.date || '',
+    body.arriveTime || '', body.teamMembers || '',
+    body.feeStatus || 'pending_fee', body.photoStatus || 'pending_shoot',
+    body.photosCount || 0, body.mainPhotos || 0,
+    body.actualAmount || 0, body.fee || 0, body.actualFee || 0,
+    body.shortStatus || 'pending_shoot', body.shortFee || 0,
+    body.notes || '', body.status || 'active'
   ).run();
 
   const record = await env.DB.prepare('SELECT * FROM records WHERE id = ?').bind(recId).first();
@@ -252,8 +254,9 @@ async function handleUpdateRecord(req, env, user) {
     }
   }
 
-  const fields = ['storeName', 'address', 'category', 'date', 'feeStatus', 'photoStatus',
-                  'actualAmount', 'fee', 'actualFee', 'notes', 'status'];
+  const fields = ['storeName', 'type', 'date', 'arriveTime', 'teamMembers', 'feeStatus', 'photoStatus',
+                  'photosCount', 'mainPhotos', 'actualAmount', 'fee', 'actualFee',
+                  'shortStatus', 'shortFee', 'notes', 'status'];
   const sets = [];
   const values = [];
 
@@ -292,49 +295,22 @@ async function handleDeleteRecord(req, env, user) {
 }
 
 // ============================================================
-// VIP 激活（免费直接开通）
+// VIP 激活（注册即送VIP，此处仅返回当前状态）
 // ============================================================
 
 async function handleVipActivate(req, env, userId, user) {
   if (!user) return json({ success: false, message: '用户不存在，请先登录' });
 
-  const { planType } = await readBody(req);
-  const validPlans = ['month', 'year', 'forever'];
-  if (!validPlans.includes(planType)) {
-    return json({ success: false, message: '无效的套餐类型' });
-  }
-
-  const now = new Date();
-  let expireDate;
-
-  if (planType === 'forever') {
-    expireDate = '2099-12-31';
-  } else if (planType === 'year') {
-    now.setFullYear(now.getFullYear() + 1);
-    expireDate = now.toISOString().split('T')[0];
-  } else {
-    now.setDate(now.getDate() + 30);
-    expireDate = now.toISOString().split('T')[0];
-  }
-
-  if (user.memberExpire === '2099-12-31') {
-    return json({ success: true, message: '您已是永久VIP', user, activated: false });
-  }
-
-  await env.DB.prepare(`
-    UPDATE users SET memberType = 'vip', memberExpire = ? WHERE id = ?
-  `).bind(expireDate, userId).run();
-
-  const updatedUser = await getUserById(env.DB, userId);
-  const { password: _, ...safeUser } = updatedUser || {};
+  // 注册时已赠送VIP至2099-12-01，这里仅返回状态
+  const expireText = (user.memberExpire === '2099-12-01' || user.memberExpire === '2099-12-31')
+    ? '永久有效'
+    : ('有效期至 ' + (user.memberExpire || '未知'));
 
   return json({
     success: true,
-    message: 'VIP开通成功！',
-    user: safeUser,
-    planType,
-    expireAt: expireDate,
-    activated: true,
+    message: '您已是VIP会员（' + expireText + '）',
+    user,
+    activated: false,
   });
 }
 
@@ -386,6 +362,21 @@ async function handleAdminUpdateUser(req, env) {
 
   const fields = [];
   const values = [];
+
+  // VIP叠加逻辑：+99年
+  if (body.vipAddYears !== undefined) {
+    const currentUser = await env.DB.prepare(
+      'SELECT memberExpire FROM users WHERE id = ?'
+    ).bind(id).first();
+    const baseExpire = currentUser?.memberExpire
+      ? new Date(currentUser.memberExpire)
+      : new Date();
+    baseExpire.setFullYear(baseExpire.getFullYear() + (body.vipAddYears || 99));
+    const maxDate = new Date('2099-12-01');
+    const finalExpire = baseExpire > maxDate ? '2099-12-01' : baseExpire.toISOString().split('T')[0];
+    fields.push(`memberType = ?`, `memberExpire = ?`);
+    values.push('vip', finalExpire);
+  }
 
   const fieldMap = {
     memberType: 'memberType',
