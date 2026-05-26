@@ -689,8 +689,6 @@
         </div>
       </div>
 
-      <!-- 🔥 免费开通9999永久会员 按钮 -->
-      <button class="btn-9999-vip" id="btn-9999-vip" onclick="activateVip9999()">🔥 免费开通 9999 永久会员 ♾️</button>
 
       <div class="menu-list" style="margin-top:16px">
         <!-- 会员入口 -->
@@ -769,36 +767,16 @@
 <div class="vip-modal" id="vip-modal" onclick="closeVipModal(event)">
   <div class="vip-modal-sheet" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="vip-modal-title">🌟 升级VIP会员</div>
+    <div class="modal-title" id="vip-modal-title">🌟 VIP会员中心</div>
     <div id="vip-modal-status" style="font-size:13px;color:#666;margin-bottom:8px"></div>
-    <div class="vip-plans" id="vip-plans-container">
-      <div class="vip-plan" data-period="month" data-price="1" onclick="selectVipPlan(this)">
-        <div class="vip-plan-price">¥1</div>
-        <div class="vip-plan-period">每月</div>
-        <div class="vip-plan-name">月卡</div>
-      </div>
-      <div class="vip-plan selected" data-period="year" data-price="2" onclick="selectVipPlan(this)">
-        <div class="vip-plan-price">¥2</div>
-        <div class="vip-plan-period">每年</div>
-        <div class="vip-plan-name">年卡</div>
-      </div>
-      <div class="vip-plan" data-period="forever" data-price="3" onclick="selectVipPlan(this)">
-        <div class="vip-plan-price">¥3</div>
-        <div class="vip-plan-period">永久</div>
-        <div class="vip-plan-name">终身</div>
-      </div>
-      <div class="vip-plan vip-plan-9999" data-period="forever9999" data-price="0" onclick="selectVipPlan(this)">
-        <div class="vip-plan-price" style="font-size:20px">♾️</div>
-        <div class="vip-plan-period">9999年</div>
-        <div class="vip-plan-name">永久会员</div>
-      </div>
+    <div id="vip-plans-container" style="display:none">
     </div>
     <ul class="vip-features">
       <li>每日添加记录无上限</li>
       <li>享受所有高级功能</li>
       <li>优先客服支持</li>
     </ul>
-    <button class="btn-upgrade-vip" id="btn-upgrade-confirm" onclick="activateVipDirect()">立即开通</button>
+    <button class="btn-upgrade-vip" id="btn-upgrade-confirm" onclick="closeVipModalDirect()">我知道了 🎊</button>
     <button class="vip-modal-close" onclick="closeVipModalDirect()">暂不开通</button>
   </div>
 </div>
@@ -1595,16 +1573,8 @@ function copyQQ() {
 }
 
 // ============================================================
-// VIP会员激活功能
+// VIP 状态判断
 // ============================================================
-let selectedVipPeriod = 'year';
-
-// VIP套餐配置
-const VIP_PLANS = {
-  month: { name: '月卡', price: 1, period: '一个月', days: 30 },
-  year: { name: '年卡', price: 2, period: '一年', days: 365 },
-  forever: { name: '终身', price: 3, period: '永久', days: 36500 }
-};
 
 // 判断用户是否为VIP
 function isUserVip(user) {
@@ -1623,16 +1593,13 @@ function updateVipUI() {
   if (!user) return;
 
   const isVip = isUserVip(user);
-  const is9999 = user.memberExpire === '9999-01-01';
 
   // 更新"我的"页面VIP Banner
   const banner = document.getElementById('profile-vip-banner');
   if (banner) {
     if (isVip) {
       let expireText;
-      if (is9999) {
-        expireText = '♾️ 9999永久有效';
-      } else if (!user.memberExpire || user.memberExpire === '2099-12-31') {
+      if (!user.memberExpire || user.memberExpire === '2099-12-01' || user.memberExpire === '2099-12-31') {
         expireText = '永久有效';
       } else {
         expireText = user.memberExpire || 'VIP会员';
@@ -1689,52 +1656,28 @@ function updateVipUI() {
   if (profileRole) {
     if (user.role === 'admin') {
       profileRole.innerHTML = '<span class="vip-badge active">👑 管理员</span>';
-    } else if (is9999) {
-      profileRole.innerHTML = '<span class="vip-badge active" style="background:linear-gradient(135deg,#FF6B00,#FF4444);color:#fff;border:none">♾️ 9999会员</span>';
     } else if (isVip) {
       profileRole.innerHTML = '<span class="vip-badge active">🌟 VIP会员</span>';
     } else {
       profileRole.innerHTML = '普通用户 <span class="vip-badge normal" style="margin-left:4px;cursor:pointer" onclick="openVipModal()">升级</span>';
     }
   }
-
-  // 9999永久会员按钮：已开通则隐藏
-  const btn9999 = document.getElementById('btn-9999-vip');
-  if (btn9999) {
-    btn9999.style.display = is9999 ? 'none' : 'block';
-  }
 }
 
-// 打开VIP升级弹窗
+// 打开VIP弹窗（注册即VIP，仅展示状态）
 function openVipModal() {
   const user = Api.getUser();
   if (!user) return;
-  
-  const isVip = isUserVip(user);
+
   const modal = document.getElementById('vip-modal');
   const statusEl = document.getElementById('vip-modal-status');
-  const plansContainer = document.getElementById('vip-plans-container');
-  const confirmBtn = document.getElementById('btn-upgrade-confirm');
-  const titleEl = document.getElementById('vip-modal-title');
-  
-  if (isVip) {
-    titleEl.textContent = '🌟 VIP会员中心';
-    statusEl.textContent = user.memberExpire && user.memberExpire !== '2099-12-31' 
-      ? '您的VIP有效期至：' + user.memberExpire 
-      : '您已是永久VIP会员';
-    plansContainer.style.display = 'none';
-    confirmBtn.textContent = '🌟 我已知晓特权';
-    confirmBtn.style.background = 'var(--primary)';
-    confirmBtn.onclick = closeVipModalDirect;
-  } else {
-    titleEl.textContent = '🌟 升级VIP会员';
-    statusEl.textContent = '开通即享无限添加记录特权';
-    plansContainer.style.display = 'flex';
-    confirmBtn.textContent = '立即开通';
-    confirmBtn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
-    confirmBtn.onclick = activateVipDirect;
-  }
-  
+
+  // 注册即VIP，直接展示会员状态
+  const expireText = user.memberExpire && user.memberExpire !== '2099-12-01' && user.memberExpire !== '2099-12-31'
+    ? '您的VIP有效期至：' + user.memberExpire
+    : '您已是永久VIP会员';
+  statusEl.textContent = expireText;
+
   modal.classList.add('show');
 }
 
@@ -1747,91 +1690,11 @@ function closeVipModalDirect() {
   document.getElementById('vip-modal').classList.remove('show'); 
 }
 
-// 选择套餐
-function selectVipPlan(el) {
-  document.querySelectorAll('.vip-plan').forEach(p => p.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedVipPeriod = el.dataset.period;
-}
-
-// 直接激活VIP（免费开通）
-async function activateVipDirect() {
-  const user = Api.getUser();
-  if (!user) {
-    showToast('请先登录');
-    return;
-  }
-
-  const btn = document.getElementById('btn-upgrade-confirm');
-  btn.textContent = '⏳ 正在开通...';
-  btn.disabled = true;
-
-  try {
-    const res = await Api.activateVip(selectedVipPeriod);
-
-    if (res.ok && res.data.success) {
-      // 更新本地用户缓存
-      if (res.data.user) {
-        Api.user = res.data.user;
-      } else {
-        user.memberType = 'vip';
-        user.memberExpire = res.data.expireAt;
-        Api.user = user;
-      }
-
-      closeVipModalDirect();
-      showVipSuccessModal(res.data);
-      updateVipUI();
-      showToast('🎉 VIP开通成功！');
-    } else {
-      showToast(res.data.message || '开通失败，请稍后重试');
-    }
-  } catch (err) {
-    console.error('VIP激活失败:', err);
-    showToast('网络异常，请稍后重试');
-  }
-
-  btn.textContent = '立即开通';
-  btn.disabled = false;
-}
-
-// 🔥 一键开通 9999 永久会员（免费）
-async function activateVip9999() {
-  const user = Api.getUser();
-  if (!user) { showToast('请先登录'); return; }
-  if (user.memberExpire === '9999-01-01') { showToast('♾️ 您已是9999永久会员！'); return; }
-
-  const btn = document.getElementById('btn-9999-vip');
-  const origText = btn.textContent;
-  btn.textContent = '⏳ 正在开通...';
-  btn.disabled = true;
-
-  try {
-    const res = await Api.activateVip('forever9999');
-    if (res.ok && res.data.success) {
-      if (res.data.user) Api.user = res.data.user;
-      else { user.memberType = 'vip'; user.memberExpire = res.data.expireAt; Api.user = user; }
-      showVipSuccessModal(res.data);
-      updateVipUI();
-      showToast('🎉 9999永久会员开通成功！');
-    } else {
-      showToast(res.data.message || '开通失败');
-    }
-  } catch (err) {
-    showToast('网络异常，请重试');
-  }
-
-  btn.textContent = origText;
-  btn.disabled = false;
-}
-
 // 显示VIP开通成功弹窗
 function showVipSuccessModal(data) {
   const modal = document.getElementById('vip-success-modal');
   let expireText = '';
-  if (data.expireAt === '9999-01-01') {
-    expireText = '♾️ 您已获得9999永久会员资格！';
-  } else if (data.expireAt === '2099-12-31') {
+  if (!data.expireAt || data.expireAt === '2099-12-31' || data.expireAt === '2099-12-01') {
     expireText = '✨ 您已获得永久VIP会员资格！';
   } else {
     expireText = `📅 有效期至：${data.expireAt}`;

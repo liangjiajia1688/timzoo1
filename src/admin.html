@@ -582,31 +582,14 @@
 <div class="vip-modal" id="vip-modal" onclick="closeVipModal(event)">
   <div class="vip-card">
     <h3>🌟 升级VIP会员</h3>
-    <div class="vip-sub">开通后每日添加记录无限制</div>
-    <div class="vip-plans">
-      <div class="vip-plan" data-period="month" onclick="selectVipPlan(this)">
-        <div class="plan-price">¥2.9</div>
-        <div class="plan-period">每月</div>
-        <div class="plan-name">月卡</div>
-      </div>
-      <div class="vip-plan recommended selected" data-period="year" onclick="selectVipPlan(this)">
-        <div class="plan-price">¥29</div>
-        <div class="plan-period">每年</div>
-        <div class="plan-name">年卡</div>
-      </div>
-      <div class="vip-plan" data-period="forever" onclick="selectVipPlan(this)">
-        <div class="plan-price">¥999</div>
-        <div class="plan-period">永久</div>
-        <div class="plan-name">终身</div>
-      </div>
-    </div>
+    <div class="vip-sub">每次升级 VIP 有效期 +99 年（上限 2099年）</div>
     <ul class="vip-features">
       <li>每日添加记录无上限</li>
       <li>享受所有高级功能</li>
       <li>专属客服支持</li>
     </ul>
-    <button class="btn-vip-upgrade" id="vip-confirm-btn" onclick="confirmVipUpgrade()">立即开通</button>
-    <button class="btn-vip-close" onclick="closeVipModalDirect()">暂不开通</button>
+    <button class="btn-vip-upgrade" id="vip-confirm-btn" onclick="confirmVipUpgrade()">确认升级 +99年</button>
+    <button class="btn-vip-close" onclick="closeVipModalDirect()">取消</button>
   </div>
 </div>
 <input type="hidden" id="vip-upgrade-user-id" />
@@ -684,7 +667,6 @@ let filteredRecs = [];
 let currentFilterUserId = '';
 let editingRecId = null;
 let editingUserId = null;
-let selectedVipPeriod = 'year';
 
 
 // ============================================================
@@ -1268,11 +1250,6 @@ async function deleteAdminUser(id) {
 // ============================================================
 // VIP 升级 — 调用 /api/admin/user/update 更新会员状态
 // ============================================================
-function selectVipPlan(el) {
-  document.querySelectorAll('.vip-plan').forEach(p => p.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedVipPeriod = el.dataset.period;
-}
 
 async function refreshVipPage() {
   try {
@@ -1303,11 +1280,7 @@ async function refreshVipPage() {
 
 function openVipUpgradeModalForAll(period) {
   if (!currentUser) return;
-  selectedVipPeriod = period;
   document.getElementById('vip-upgrade-user-id').value = currentUser.id;
-  document.querySelectorAll('.vip-plan').forEach(p => {
-    p.classList.toggle('selected', p.dataset.period === period);
-  });
   document.getElementById('vip-modal').classList.add('show');
 }
 
@@ -1319,55 +1292,38 @@ function openVipUpgradeModal(userId) {
 function closeVipModal(e) { if (e.target === document.getElementById('vip-modal')) closeVipModalDirect(); }
 function closeVipModalDirect() { document.getElementById('vip-modal').classList.remove('show'); }
 
-/** 确认 VIP 升级 — 调用 API 更新用户会员状态 */
+/** 确认 VIP 升级 — 每次点击 +99年，后端自动叠加 */
 async function confirmVipUpgrade() {
   const userId = document.getElementById('vip-upgrade-user-id').value;
   if (!userId) return;
 
-  const now = new Date();
-  let expireDate = null;
-
-  if (selectedVipPeriod === 'month') {
-    const d = new Date(now); d.setMonth(d.getMonth() + 1);
-    expireDate = d.toISOString().split('T')[0];
-  } else if (selectedVipPeriod === 'year') {
-    const d = new Date(now); d.setFullYear(d.getFullYear() + 1);
-    expireDate = d.toISOString().split('T')[0];
-  } else {
-    expireDate = '2099-12-31'; // 永久
-  }
-
-  const confirmBtn = document.getElementById('vip-confirm-btn');
   setBtnLoading('vip-confirm-btn', true, '处理中...');
 
   try {
-    await api('/api/admin/user/update', {
+    const res = await api('/api/admin/user/update', {
       method: 'POST',
-      body: JSON.stringify({
-        id: userId,
-        memberType: 'vip',
-        memberExpire: expireDate,
-      }),
+      body: JSON.stringify({ id: userId, vipAddYears: 99 }),
     });
+    const data = await res.json();
 
-    // 更新本地缓存
-    const idx = allUsersCache.findIndex(u => u.id === userId);
-    if (idx >= 0) {
-      allUsersCache[idx].memberType = 'vip';
-      allUsersCache[idx].memberExpire = expireDate;
+    if (data.success && data.user) {
+      // 更新本地缓存
+      const idx = allUsersCache.findIndex(u => u.id === userId);
+      if (idx >= 0) allUsersCache[idx] = data.user;
+
+      // 如果是当前登录用户，更新顶部显示
+      if (currentUser && currentUser.id === userId) {
+        Object.assign(currentUser, data.user);
+        updateVipStatusDisplay(currentUser);
+      }
+
+      closeVipModalDirect();
+      refreshUsers();
+      refreshVipPage();
+      showToast(`✅ VIP已升级！有效期至 ${data.user.memberExpire}`);
+    } else {
+      showToast(data.error || '升级失败');
     }
-
-    // 如果是当前登录用户，更新顶部显示
-    if (currentUser && currentUser.id === userId) {
-      currentUser.memberType = 'vip';
-      currentUser.memberExpire = expireDate;
-      updateVipStatusDisplay(currentUser);
-    }
-
-    closeVipModalDirect();
-    refreshUsers();
-    refreshVipPage();
-    showToast('🎉 VIP升级成功！');
   } catch (err) {
     showToast('升级失败：' + err.message);
   } finally {
