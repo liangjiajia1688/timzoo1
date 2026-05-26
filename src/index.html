@@ -621,6 +621,12 @@
             <textarea class="form-input" id="f-notes" rows="3" placeholder="其他备注信息..." style="resize:none"></textarea>
           </div>
         </div>
+        <!-- 删除按钮（仅编辑模式显示） -->
+        <div id="delete-record-area" style="padding:16px 20px;display:none">
+          <button type="button" style="width:100%;padding:12px;background:#fff0f0;color:#e53935;border:1px dashed #e53935;border-radius:10px;font-size:15px;cursor:pointer" onclick="deleteAndGoBack()">
+            🗑️ 删除此记录
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1061,6 +1067,7 @@ let currentDetailId = null;
 async function showAddModal(id = null) {
   editingId = id;
   document.getElementById('add-page-title').textContent = id ? '编辑探店' : '新增探店';
+  document.getElementById('delete-record-area').style.display = id ? 'block' : 'none';
   if (id) {
     // 从服务端获取最新数据
     const records = await Api.getRecords({});
@@ -1185,6 +1192,22 @@ async function deleteRecord(id) {
   const res = await Api.deleteRecord(id);
   if (!res.ok || !res.data.success) {
     showToast(res.data.message || '删除失败');
+    return false;
+  }
+  return true;
+}
+
+// 编辑页面内删除按钮：确认→删除→返回列表
+async function deleteAndGoBack() {
+  if (!editingId) return;
+  if (!confirm('⚠️ 确认删除此条探店记录？\n\n删除后不可恢复！')) return;
+  const ok = await deleteRecord(editingId);
+  if (ok) {
+    editingId = null;
+    goPage('list');
+    refreshList();
+    refreshHome();
+    showToast('🗑️ 记录已删除');
   }
 }
 
