@@ -211,7 +211,7 @@ async function handleGetRecords(env, userId, user, url) {
   if (startDate) { sql += ' AND r.date >= ?'; params.push(startDate); }
   if (endDate) { sql += ' AND r.date <= ?'; params.push(endDate); }
 
-  sql += ' ORDER BY r.date DESC';
+  sql += ' ORDER BY r.createdAt DESC';  // 最新记录排最前
 
   const results = params.length > 0
     ? await env.DB.prepare(sql).bind(...params).all()
@@ -359,7 +359,7 @@ async function handleAdminRecords(env, url) {
   if (filterUser) { sql += ' AND r.userId = ?'; params.push(filterUser); }
   if (storeName) { sql += ' AND r.storeName LIKE ?'; params.push('%' + storeName + '%'); }
 
-  sql += ' ORDER BY r.date DESC';
+  sql += ' ORDER BY r.createdAt DESC';  // 最新记录排最前
 
   const results = params.length > 0
     ? await env.DB.prepare(sql).bind(...params).all()
