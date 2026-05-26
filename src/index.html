@@ -1261,6 +1261,8 @@ async function refreshHome() {
     myRecords.sort((a,b) => b.date.localeCompare(a.date));
 
     // ---- 首页筛选过滤 ----
+    // 兼容旧数据：type 为空时默认为 explore
+    myRecords.forEach(r => { if (!r.type) r.type = 'explore'; });
     if (homeFeeFilter === 'pending_fee') {
       myRecords = myRecords.filter(r => r.feeStatus === 'pending_fee' && r.type === 'explore');
     } else if (homeFeeFilter === 'settled') {
@@ -1333,6 +1335,8 @@ async function refreshList() {
     const records = await Api.getRecords({});
     let myRecords = records.filter(r => r.userId === user.id);
     myRecords.sort((a,b) => b.date.localeCompare(a.date));
+    // 兼容旧数据：type 为空时默认为 explore
+    myRecords.forEach(r => { if (!r.type) r.type = 'explore'; });
 
     if (currentFilter === 'pending_fee') myRecords = myRecords.filter(r => r.feeStatus === 'pending_fee' && r.type === 'explore');
     else if (currentFilter === 'settled') myRecords = myRecords.filter(r => r.feeStatus === 'settled');
@@ -1374,6 +1378,8 @@ function renderGroupedRecords(records) {
 }
 
 function renderCard(r, compact) {
+  // 兼容旧数据：type 为空时默认 explore
+  if (!r.type) r.type = 'explore';
   if (r.type === 'rest' || r.type === 'holiday') {
     const label = r.type === 'rest' ? '😴 休息日' : '🎉 节假日';
     return `<div class="record-card" onclick="openDetail('${r.id}')">
@@ -1391,18 +1397,18 @@ function renderCard(r, compact) {
   const feeSettled  = r.feeStatus === 'settled';
   const photoDone   = r.photoStatus === 'photo-done';
   const photoPubed  = r.photoStatus === 'published';
-  // 卡片内切换按钮
-  const actionBtns = (r.type === 'explore' || r.type === 'brand') ? `
+  // 卡片内切换按钮（兼容 type 为空的情况，默认展示）
+  const actionBtns = (r.type === 'explore' || r.type === 'brand' || !r.type) ? `
     <div class="card-actions" onclick="event.stopPropagation()">
       <button class="card-btn ${feeSettled ? 'fee-settled' : 'fee-pending_fee'}"
         onclick="toggleCardFee('${r.id}',this)">${feeSettled ? '✅ 已收款' : '💸 未收款'}</button>
       <button class="card-btn photo-${r.photoStatus || 'pending_shoot'}"
         onclick="toggleCardPhoto('${r.id}',this)">${photoPubed ? '📤 已发布' : photoDone ? '📸 已出片' : '⏳ 待出片'}</button>
       <button class="card-btn card-btn-edit" onclick="showAddModal('${r.id}')">✏️ 编辑</button>
-    </div>` : `<div style="font-size:11px;color:#ff5500;text-align:center;padding:4px 0">⚠️ type=${r.type} 按钮被隐藏</div>`;
+    </div>` : '';
   return `<div class="record-card" id="card-${r.id}">
     <div class="record-card-header" onclick="openDetail('${r.id}')">
-      <div class="record-shop">${r.shopName || '未知店铺'}</div>
+      <div class="record-shop">${r.shopName || '探店记录'}</div>
       <div class="record-date">${r.date}${r.arriveTime ? ' ' + r.arriveTime : ''}</div>
     </div>
     <div class="record-row" onclick="openDetail('${r.id}')">${typeBadge}
