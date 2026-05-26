@@ -369,12 +369,20 @@
     .vip-plan-price { font-size: 22px; font-weight: 700; color: #FF8C00; }
     .vip-plan-period { font-size: 12px; color: #666; margin: 4px 0; }
     .vip-plan-name { font-size: 13px; font-weight: 600; color: #333; }
+    .vip-plan-9999 { border-color: #FFD700 !important; background: linear-gradient(135deg, #FFF8E1, #FFECB3) !important; position: relative; overflow: hidden; }
+    .vip-plan-9999::before { content: '🔥 免费'; position: absolute; top: 4px; right: -18px; background: #FF4444; color: #fff; font-size: 10px; padding: 2px 24px; transform: rotate(45deg); font-weight: bold; letter-spacing: 1px; }
+    .vip-plan-9999.selected { border-color: #FF6B00 !important; box-shadow: 0 2px 12px rgba(255,107,0,0.35); }
     .vip-features { text-align: left; margin: 16px 0; }
     .vip-features li { list-style: none; padding: 8px 0; font-size: 14px; color: #555; display: flex; align-items: center; gap: 8px; }
     .vip-features li::before { content: '✓'; color: #07C160; font-weight: bold; }
     .btn-upgrade-vip { width: 100%; padding: 14px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
     .btn-upgrade-vip:active { opacity: 0.9; }
     .vip-modal-close { width: 100%; padding: 12px; background: none; color: #999; border: none; font-size: 14px; cursor: pointer; margin-top: 8px; }
+
+    /* === 9999永久会员按钮 === */
+    .btn-9999-vip { width: 100%; padding: 14px 16px; margin-top: 12px; background: linear-gradient(135deg, #FF6B00, #FF4444); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; animation: glow-pulse 2s ease-in-out infinite; box-shadow: 0 3px 15px rgba(255,68,68,0.35); }
+    .btn-9999-vip:active { opacity: 0.85; transform: scale(0.98); }
+    @keyframes glow-pulse { 0%,100% { box-shadow: 0 3px 15px rgba(255,68,68,0.35); } 50% { box-shadow: 0 3px 25px rgba(255,107,0,0.55), 0 0 40px rgba(255,68,68,0.2); } }
 
     /* === VIP开通成功弹窗 === */
     .pay-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 350; align-items: flex-end; }
@@ -449,15 +457,19 @@
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-num" id="stat-total">0</div>
-          <div class="stat-label">本月探店</div>
+          <div class="stat-label">探店数</div>
         </div>
         <div class="stat-card">
           <div class="stat-num" id="stat-income" style="color:var(--success)">¥0</div>
           <div class="stat-label">实收金额</div>
         </div>
         <div class="stat-card">
-          <div class="stat-num" id="stat-pending_fee" style="color:var(--warning)">0</div>
+          <div class="stat-num" id="stat-pending_fee" style="color:var(--warning)">¥0</div>
           <div class="stat-label">待结算</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-photos" style="color:var(--blue)">0</div>
+          <div class="stat-label">交片数</div>
         </div>
       </div>
       <!-- 首页筛选切换栏 -->
@@ -677,6 +689,9 @@
         </div>
       </div>
 
+      <!-- 🔥 免费开通9999永久会员 按钮 -->
+      <button class="btn-9999-vip" id="btn-9999-vip" onclick="activateVip9999()">🔥 免费开通 9999 永久会员 ♾️</button>
+
       <div class="menu-list" style="margin-top:16px">
         <!-- 会员入口 -->
         <div class="menu-item" id="menu-vip" onclick="openVipModal()">
@@ -771,6 +786,11 @@
         <div class="vip-plan-price">¥3</div>
         <div class="vip-plan-period">永久</div>
         <div class="vip-plan-name">终身</div>
+      </div>
+      <div class="vip-plan vip-plan-9999" data-period="forever9999" data-price="0" onclick="selectVipPlan(this)">
+        <div class="vip-plan-price" style="font-size:20px">♾️</div>
+        <div class="vip-plan-period">9999年</div>
+        <div class="vip-plan-name">永久会员</div>
       </div>
     </div>
     <ul class="vip-features">
@@ -1270,17 +1290,17 @@ async function refreshHome() {
       myRecords = myRecords.filter(r => r.photoStatus === 'published');
     }
 
-    // ---- 统计区（基于筛选后的记录） ----
-    const now = new Date();
-    const monthlyFiltered = myRecords.filter(r => {
-      const d = new Date(r.date);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    });
-    document.getElementById('stat-total').textContent = monthlyFiltered.filter(r => r.type === 'explore').length;
-    const income = monthlyFiltered.reduce((s, r) => s + (r.actualAmount || 0), 0);
+    // ---- 统计区（基于筛选后的当前记录，实时反映操作结果） ----
+    const exploreRecords = myRecords.filter(r => r.type === 'explore' || r.type === 'brand' || !r.type);
+    document.getElementById('stat-total').textContent = exploreRecords.length;
+    const income = exploreRecords.reduce((s, r) => s + (r.actualAmount || 0), 0);
     document.getElementById('stat-income').textContent = '¥' + income;
-    const pending_fee = monthlyFiltered.filter(r => r.feeStatus === 'pending_fee' && r.type === 'explore').length;
-    document.getElementById('stat-pending_fee').textContent = pending_fee;
+    // 待结算 = 未收款记录的 fee 总和
+    const pendingFeeAmount = exploreRecords.filter(r => r.feeStatus === 'pending_fee').reduce((s, r) => s + (r.fee || 0), 0);
+    document.getElementById('stat-pending_fee').textContent = '¥' + pendingFeeAmount;
+    // 交片数 = 当前可见记录的 photosCount 总和
+    const totalPhotos = exploreRecords.reduce((s, r) => s + (r.photosCount || 0), 0);
+    document.getElementById('stat-photos').textContent = totalPhotos;
 
     // 近期5条（从已筛记录中取最新5条）
     const recent = myRecords.slice(0, 5);
@@ -1603,12 +1623,18 @@ function updateVipUI() {
   if (!user) return;
 
   const isVip = isUserVip(user);
+  const is9999 = user.memberExpire === '9999-01-01';
 
   // 更新"我的"页面VIP Banner
   const banner = document.getElementById('profile-vip-banner');
   if (banner) {
     if (isVip) {
-      const expireText = user.memberExpire && user.memberExpire !== '2099-12-31' ? '有效期至：' + user.memberExpire : '永久有效';
+      let expireText;
+      if (is9999) {
+        expireText = '♾️ 9999永久有效';
+      } else if (!user.memberExpire || user.memberExpire === '2099-12-31') {
+        expireText = '永久有效';
+      } else {
       document.getElementById('vip-banner-title').textContent = '🌟 VIP会员';
       document.getElementById('vip-banner-sub').textContent = expireText;
       document.getElementById('vip-banner-btn').textContent = '已开通';
@@ -1661,11 +1687,19 @@ function updateVipUI() {
   if (profileRole) {
     if (user.role === 'admin') {
       profileRole.innerHTML = '<span class="vip-badge active">👑 管理员</span>';
+    } else if (is9999) {
+      profileRole.innerHTML = '<span class="vip-badge active" style="background:linear-gradient(135deg,#FF6B00,#FF4444);color:#fff;border:none">♾️ 9999会员</span>';
     } else if (isVip) {
       profileRole.innerHTML = '<span class="vip-badge active">🌟 VIP会员</span>';
     } else {
       profileRole.innerHTML = '普通用户 <span class="vip-badge normal" style="margin-left:4px;cursor:pointer" onclick="openVipModal()">升级</span>';
     }
+  }
+
+  // 9999永久会员按钮：已开通则隐藏
+  const btn9999 = document.getElementById('btn-9999-vip');
+  if (btn9999) {
+    btn9999.style.display = is9999 ? 'none' : 'block';
   }
 }
 
@@ -1759,11 +1793,43 @@ async function activateVipDirect() {
   btn.disabled = false;
 }
 
+// 🔥 一键开通 9999 永久会员（免费）
+async function activateVip9999() {
+  const user = Api.getUser();
+  if (!user) { showToast('请先登录'); return; }
+  if (user.memberExpire === '9999-01-01') { showToast('♾️ 您已是9999永久会员！'); return; }
+
+  const btn = document.getElementById('btn-9999-vip');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 正在开通...';
+  btn.disabled = true;
+
+  try {
+    const res = await Api.activateVip('forever9999');
+    if (res.ok && res.data.success) {
+      if (res.data.user) Api.user = res.data.user;
+      else { user.memberType = 'vip'; user.memberExpire = res.data.expireAt; Api.user = user; }
+      showVipSuccessModal(res.data);
+      updateVipUI();
+      showToast('🎉 9999永久会员开通成功！');
+    } else {
+      showToast(res.data.message || '开通失败');
+    }
+  } catch (err) {
+    showToast('网络异常，请重试');
+  }
+
+  btn.textContent = origText;
+  btn.disabled = false;
+}
+
 // 显示VIP开通成功弹窗
 function showVipSuccessModal(data) {
   const modal = document.getElementById('vip-success-modal');
   let expireText = '';
-  if (data.expireAt === '2099-12-31') {
+  if (data.expireAt === '9999-01-01') {
+    expireText = '♾️ 您已获得9999永久会员资格！';
+  } else if (data.expireAt === '2099-12-31') {
     expireText = '✨ 您已获得永久VIP会员资格！';
   } else {
     expireText = `📅 有效期至：${data.expireAt}`;
