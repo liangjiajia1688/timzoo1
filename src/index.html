@@ -422,8 +422,19 @@
           <input class="form-input" id="reg-username" type="text" placeholder="请输入用户名" />
         </div>
         <div class="form-group">
-          <label class="form-label">真实姓名</label>
-          <input class="form-input" id="reg-realname" type="text" placeholder="请输入真实姓名" />
+          <label class="form-label">平台昵称</label>
+          <input class="form-input" id="reg-realname" type="text" placeholder="请输入平台昵称" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">主做平台</label>
+          <select class="form-input" id="reg-platform" style="appearance:auto">
+            <option value="">请选择主做平台</option>
+            <option value="抖音">抖音</option>
+            <option value="小红书">小红书</option>
+            <option value="视频号">视频号</option>
+            <option value="快手">快手</option>
+            <option value="其他">其他</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label">密码</label>
@@ -981,6 +992,7 @@ async function doLogin() {
 async function doRegister() {
   const username = document.getElementById('reg-username').value.trim();
   const realname = document.getElementById('reg-realname').value.trim();
+  const platform = document.getElementById('reg-platform').value;
   const password = document.getElementById('reg-password').value;
   const password2 = document.getElementById('reg-password2').value;
   const errEl = document.getElementById('reg-error');
@@ -990,7 +1002,7 @@ async function doRegister() {
   showErr(errEl, '');
   const btn = errEl.parentElement.querySelector('.btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = '注册中...'; }
-  const res = await Api.register({ username, realname, password });
+  const res = await Api.register({ username, realname, password, platform });
   if (btn) { btn.disabled = false; btn.textContent = '注册'; }
   if (res.ok && res.data.success && res.data.user) {
     Api.setSession(res.data.user);
