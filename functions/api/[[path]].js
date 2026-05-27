@@ -129,7 +129,7 @@ async function handleLogin(req, env) {
 }
 
 async function handleRegister(req, env) {
-  const { username, password, realname } = await readBody(req);
+  const { username, password, realname, platform } = await readBody(req);
 
   // 检查是否已存在
   const existing = await env.DB.prepare(
@@ -144,10 +144,15 @@ async function handleRegister(req, env) {
   // 注册即送 VIP，有效期至 2099-12-01
   const expireStr = '2099-12-01';
 
+  // 确保 platform 列存在（首次运行时添加）
+  try {
+    await env.DB.prepare(`ALTER TABLE users ADD COLUMN platform TEXT DEFAULT ''`).run();
+  } catch(e) { /* column already exists */ }
+
   await env.DB.prepare(`
-    INSERT INTO users (id, username, password, realname, role, memberType, memberExpire, createdAt)
-    VALUES (?, ?, ?, ?, 'user', 'vip', ?, datetime('now'))
-  `).bind(userId, username, password, realname || username, expireStr).run();
+    INSERT INTO users (id, username, password, realname, platform, role, memberType, memberExpire, createdAt)
+    VALUES (?, ?, ?, ?, ?, 'user', 'vip', ?, datetime('now'))
+  `).bind(userId, username, password, realname || username, platform || '', expireStr).run();
 
   const user = await getUserById(env.DB, userId);
   const { password: _, ...safeUser } = user || {};
