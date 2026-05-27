@@ -433,7 +433,7 @@
         </div>
         <table>
           <thead>
-            <tr><th>用户</th><th>用户名</th><th>角色</th><th>会员等级</th><th>到期时间</th><th>探店数</th><th>注册时间</th><th>操作</th></tr>
+            <tr><th>用户</th><th>平台昵称</th><th>主做平台</th><th>用户名</th><th>角色</th><th>会员等级</th><th>到期时间</th><th>探店数</th><th>注册时间</th><th>操作</th></tr>
           </thead>
           <tbody id="users-table"></tbody>
         </table>
@@ -544,8 +544,19 @@
       <input class="form-input" id="um-username" type="text" placeholder="登录账号" />
     </div>
     <div class="form-group" style="margin-top:12px">
-      <label class="form-label">真实姓名 *</label>
-      <input class="form-input" id="um-realname" type="text" placeholder="真实姓名" />
+      <label class="form-label">平台昵称 *</label>
+      <input class="form-input" id="um-realname" type="text" placeholder="请输入平台昵称" />
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">主做平台</label>
+      <select class="form-input" id="um-platform" style="appearance:auto">
+        <option value="">请选择主做平台</option>
+        <option value="抖音">抖音</option>
+        <option value="小红书">小红书</option>
+        <option value="视频号">视频号</option>
+        <option value="快手">快手</option>
+        <option value="其他">其他</option>
+      </select>
     </div>
     <div class="form-group" style="margin-top:12px">
       <label class="form-label">密码 *<span style="font-size:11px;color:#999;font-weight:400">（编辑时留空则不修改）</span></label>
@@ -1101,7 +1112,7 @@ async function refreshUsers() {
 
     const tbody = document.getElementById('users-table');
     if (users.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="8"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="10"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
       return;
     }
 
@@ -1114,8 +1125,13 @@ async function refreshUsers() {
       const memberLabel = isVip && !isExpired ? 'VIP会员' : '普通会员';
       const expireText = u.memberExpire ? (isExpired ? '已到期' : u.memberExpire) : '永久';
       const expireClass = isExpired ? 'vip-badge expired' : 'vip-badge active';
+      const platformBadge = u.platform
+        ? `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#EEF4FF;color:#1976D2">${u.platform}</span>`
+        : '<span style="color:#999;font-size:12px">-</span>';
       return `<tr>
         <td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar">${initial}</div><span>${u.realname||'-'}</span></div></td>
+        <td>${u.realname||'-'}</td>
+        <td>${platformBadge}</td>
         <td>${u.username}</td>
         <td><span class="${u.role==='admin'?'role-admin':'role-user'}">${u.role==='admin'?'管理员':'普通用户'}</span></td>
         <td><span class="${memberClass}">${memberLabel}</span></td>
@@ -1137,7 +1153,7 @@ async function refreshUsers() {
 function openAddUserModal() {
   editingUserId = null;
   document.getElementById('user-modal-title').textContent = '新增用户';
-  ['um-username','um-realname','um-password'].forEach(id => {
+  ['um-username','um-realname','um-password','um-platform'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('um-role').value = 'user';
@@ -1154,6 +1170,7 @@ function openEditUserModal(id) {
 
   document.getElementById('um-username').value = u.username || '';
   document.getElementById('um-realname').value = u.realname || '';
+  document.getElementById('um-platform').value = u.platform || '';
   document.getElementById('um-password').value = ''; // 不回显密码
   document.getElementById('um-role').value = u.role || 'user';
   document.getElementById('um-member-type').value = u.memberType || 'normal';
@@ -1168,12 +1185,13 @@ function closeUserModalDirect() { document.getElementById('user-modal').classLis
 async function saveAdminUser() {
   const username = document.getElementById('um-username').value.trim();
   const realname = document.getElementById('um-realname').value.trim();
+  const platform = document.getElementById('um-platform').value;
   const password = document.getElementById('um-password').value;
   const role = document.getElementById('um-role').value;
   const memberType = document.getElementById('um-member-type').value;
   const memberExpire = document.getElementById('um-member-expire').value;
 
-  if (!username || !realname) { showToast('请填写用户名和真实姓名'); return; }
+  if (!username || !realname) { showToast('请填写用户名和平台昵称'); return; }
   if (!editingUserId && !password) { showToast('请设置密码'); return; }
   if (password && password.length < 6) { showToast('密码至少6位'); return; }
 
@@ -1188,6 +1206,7 @@ async function saveAdminUser() {
       // realname 和 username 也需要通过 user update 接口传递（worker 需支持）
       updatePayload.realname = realname;
       updatePayload.newUsername = username;
+      updatePayload.platform = platform;
 
       await api('/api/admin/user/update', {
         method: 'POST',
@@ -1209,7 +1228,7 @@ async function saveAdminUser() {
       await api('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify({
-          username, password, realname,
+          username, password, realname, platform,
           // 注册后的额外设置
           _extra: { role, memberType, memberExpire },
         }),
