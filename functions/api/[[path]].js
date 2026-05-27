@@ -119,7 +119,7 @@ async function handleLogin(req, env) {
   const { username, password } = await readBody(req);
 
   const result = await env.DB.prepare(
-    'SELECT id, username, realname, role, memberType, memberExpire, createdAt FROM users WHERE username = ? AND password = ?'
+    'SELECT id, username, realname, platform, role, memberType, memberExpire, createdAt FROM users WHERE username = ? AND password = ?'
   ).bind(username, password).first();
 
   if (result) {
@@ -325,7 +325,7 @@ async function handleVipActivate(req, env, userId, user) {
 
 async function handleAdminUsers(env) {
   const results = await env.DB.prepare(
-    "SELECT id, username, realname, role, memberType, memberExpire, phone, createdAt FROM users ORDER BY createdAt DESC"
+    "SELECT id, username, realname, platform, role, memberType, memberExpire, phone, createdAt FROM users ORDER BY createdAt DESC"
   ).all();
   return json({ success: true, users: results.results || [] });
 }
@@ -388,6 +388,7 @@ async function handleAdminUpdateUser(req, env) {
     memberExpire: 'memberExpire',
     role: 'role',
     realname: 'realname',
+    platform: 'platform',
     password: 'password',
     phone: 'phone',
   };
@@ -468,6 +469,6 @@ async function handleAdminStats(env) {
 async function getUserById(db, userId) {
   if (!userId) return null;
   return db.prepare(
-    'SELECT id, username, password, realname, role, memberType, memberExpire, phone, avatar, createdAt FROM users WHERE id = ?'
+    'SELECT id, username, password, realname, platform, role, memberType, memberExpire, phone, avatar, createdAt FROM users WHERE id = ?'
   ).bind(userId).first();
 }
