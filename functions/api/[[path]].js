@@ -141,8 +141,10 @@ async function handleRegister(req, env) {
   }
 
   const userId = 'user_' + Date.now();
-  // 注册即送 VIP，有效期至 2099-12-01
-  const expireStr = '2099-12-01';
+  // 注册即送 VIP，有效期 1 年
+  const now = new Date();
+  now.setFullYear(now.getFullYear() + 1);
+  const expireStr = now.toISOString().split('T')[0];
 
   // 确保 platform 列存在（首次运行时添加）
   try {
@@ -306,10 +308,8 @@ async function handleDeleteRecord(req, env, user) {
 async function handleVipActivate(req, env, userId, user) {
   if (!user) return json({ success: false, message: '用户不存在，请先登录' });
 
-  // 注册时已赠送VIP至2099-12-01，这里仅返回状态
-  const expireText = (user.memberExpire === '2099-12-01' || user.memberExpire === '2099-12-31')
-    ? '永久有效'
-    : ('有效期至 ' + (user.memberExpire || '未知'));
+  // 注册时已赠送VIP 1年，这里仅返回状态
+  const expireText = user.memberExpire ? ('有效期至 ' + user.memberExpire) : '未知';
 
   return json({
     success: true,
@@ -368,7 +368,7 @@ async function handleAdminUpdateUser(req, env) {
   const fields = [];
   const values = [];
 
-  // VIP叠加逻辑：+99年
+  // VIP叠加逻辑：+N年（默认+1年）
   if (body.vipAddYears !== undefined) {
     const currentUser = await env.DB.prepare(
       'SELECT memberExpire FROM users WHERE id = ?'
@@ -376,7 +376,7 @@ async function handleAdminUpdateUser(req, env) {
     const baseExpire = currentUser?.memberExpire
       ? new Date(currentUser.memberExpire)
       : new Date();
-    baseExpire.setFullYear(baseExpire.getFullYear() + (body.vipAddYears || 99));
+    baseExpire.setFullYear(baseExpire.getFullYear() + (body.vipAddYears || 1));
     const maxDate = new Date('2099-12-01');
     const finalExpire = baseExpire > maxDate ? '2099-12-01' : baseExpire.toISOString().split('T')[0];
     fields.push(`memberType = ?`, `memberExpire = ?`);
