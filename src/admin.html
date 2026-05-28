@@ -408,7 +408,7 @@
               <button class="btn-vip-upgrade" style="margin-top:12px;padding:10px 20px;font-size:14px" onclick="openVipUpgradeModalForAll('year')">立即开通</button>
             </div>
             <div style="padding:24px;border:2px solid #E5E5E5;border-radius:12px;text-align:center">
-              <div style="font-size:32px;font-weight:700;color:#FF8C00">¥999</div>
+              <div style="font-size:32px;font-weight:700;color:#FF8C00">¥99</div>
               <div style="font-size:14px;color:#666;margin:8px 0">终身</div>
               <div style="font-size:12px;color:#999">永久有效</div>
               <button class="btn-vip-upgrade" style="margin-top:12px;padding:10px 20px;font-size:14px" onclick="openVipUpgradeModalForAll('forever')">立即开通</button>
@@ -593,13 +593,13 @@
 <div class="vip-modal" id="vip-modal" onclick="closeVipModal(event)">
   <div class="vip-card">
     <h3>🌟 升级VIP会员</h3>
-    <div class="vip-sub">每次升级 VIP 有效期 +99 年（上限 2099年）</div>
+    <div class="vip-sub">每次升级 VIP 有效期 +1 年（可叠加）</div>
     <ul class="vip-features">
       <li>每日添加记录无上限</li>
       <li>享受所有高级功能</li>
       <li>专属客服支持</li>
     </ul>
-    <button class="btn-vip-upgrade" id="vip-confirm-btn" onclick="confirmVipUpgrade()">确认升级 +99年</button>
+    <button class="btn-vip-upgrade" id="vip-confirm-btn" onclick="confirmVipUpgrade()">确认升级 +1年</button>
     <button class="btn-vip-close" onclick="closeVipModalDirect()">取消</button>
   </div>
 </div>
@@ -1311,7 +1311,7 @@ function openVipUpgradeModal(userId) {
 function closeVipModal(e) { if (e.target === document.getElementById('vip-modal')) closeVipModalDirect(); }
 function closeVipModalDirect() { document.getElementById('vip-modal').classList.remove('show'); }
 
-/** 确认 VIP 升级 — 每次点击 +99年，后端自动叠加 */
+/** 确认 VIP 升级 — 每次点击 +1年，后端自动叠加 */
 async function confirmVipUpgrade() {
   const userId = document.getElementById('vip-upgrade-user-id').value;
   if (!userId) return;
@@ -1321,9 +1321,9 @@ async function confirmVipUpgrade() {
   try {
     const res = await api('/api/admin/user/update', {
       method: 'POST',
-      body: JSON.stringify({ id: userId, vipAddYears: 99 }),
+      body: JSON.stringify({ id: userId, vipAddYears: 1 }),
     });
-    const data = await res.json();
+    const data = res; // api() already parses JSON
 
     if (data.success && data.user) {
       // 更新本地缓存

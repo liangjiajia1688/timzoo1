@@ -369,6 +369,8 @@
     .vip-plan-price { font-size: 22px; font-weight: 700; color: #FF8C00; }
     .vip-plan-period { font-size: 12px; color: #666; margin: 4px 0; }
     .vip-plan-name { font-size: 13px; font-weight: 600; color: #333; }
+    .vip-plan-recommended { position: relative; border-color: #FFD700 !important; background: #FFFBF0 !important; }
+    .vip-plan-recommended::before { content: '🔥 推荐'; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg,#FFD700,#FFA500); color: #fff; font-size: 10px; padding: 2px 12px; border-radius: 10px; white-space: nowrap; font-weight: bold; }
     .vip-plan-9999 { border-color: #FFD700 !important; background: linear-gradient(135deg, #FFF8E1, #FFECB3) !important; position: relative; overflow: hidden; }
     .vip-plan-9999::before { content: '🔥 免费'; position: absolute; top: 4px; right: -18px; background: #FF4444; color: #fff; font-size: 10px; padding: 2px 24px; transform: rotate(45deg); font-weight: bold; letter-spacing: 1px; }
     .vip-plan-9999.selected { border-color: #FF6B00 !important; box-shadow: 0 2px 12px rgba(255,107,0,0.35); }
@@ -786,15 +788,76 @@
     <div class="modal-handle"></div>
     <div class="modal-title" id="vip-modal-title">🌟 VIP会员中心</div>
     <div id="vip-modal-status" style="font-size:13px;color:#666;margin-bottom:8px"></div>
-    <div id="vip-plans-container" style="display:none">
+
+    <!-- 到期前1个月提醒条 -->
+    <div id="vip-expire-warning" style="display:none;background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-radius:10px;padding:12px 16px;margin-bottom:12px;border:1px solid #FFCC80">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">⏰</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#E65100">您的VIP即将到期！</div>
+          <div id="vip-expire-warning-text" style="font-size:12px;color:#F57C00;margin-top:2px"></div>
+        </div>
+      </div>
+      <button class="btn-upgrade-vip" style="margin-top:10px;padding:12px;background:linear-gradient(135deg,#FF6B35,#FF8C42)" onclick="showUpgradePlans()">
+        立即续费 →
+      </button>
     </div>
+
+    <!-- 套餐选择区（默认显示） -->
+    <div id="vip-plans-container">
+      <div class="vip-plans">
+        <div class="vip-plan" data-plan="month" onclick="selectVipPlan('month')">
+          <div class="vip-plan-price">¥2.9</div>
+          <div class="vip-plan-period">30天有效</div>
+          <div class="vip-plan-name">月卡</div>
+        </div>
+        <div class="vip-plan selected vip-plan-recommended" data-plan="year" onclick="selectVipPlan('year')">
+          <div class="vip-plan-price">¥29</div>
+          <div class="vip-plan-period">365天有效</div>
+          <div class="vip-plan-name">年卡（推荐）</div>
+        </div>
+        <div class="vip-plan" data-plan="forever" onclick="selectVipPlan('forever')">
+          <div class="vip-plan-price">¥99</div>
+          <div class="vip-plan-period">永久有效</div>
+          <div class="vip-plan-name">终身会员</div>
+        </div>
+      </div>
+    </div>
+
     <ul class="vip-features">
       <li>每日添加记录无上限</li>
       <li>享受所有高级功能</li>
       <li>优先客服支持</li>
     </ul>
-    <button class="btn-upgrade-vip" id="btn-upgrade-confirm" onclick="closeVipModalDirect()">我知道了 🎊</button>
+    <button class="btn-upgrade-vip" id="btn-upgrade-confirm" onclick="handleVipUpgrade()">联系客服开通</button>
     <button class="vip-modal-close" onclick="closeVipModalDirect()">暂不开通</button>
+  </div>
+</div>
+
+<!-- QQ客服弹窗 -->
+<div class="pay-modal" id="vip-qq-modal">
+  <div class="pay-modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💬 联系客服升级</div>
+    <div style="text-align:center;padding:20px 0 16px">
+      <div style="font-size:48px;margin-bottom:8px">👋</div>
+      <div style="font-size:17px;font-weight:bold;color:#333;margin-bottom:6px">感谢您选择 TimZoo！</div>
+      <div id="vip-qq-plan-text" style="font-size:14px;color:#666;margin-bottom:4px"></div>
+    </div>
+    <div style="background:#EEF4FF;border-radius:12px;padding:18px;text-align:center;margin:12px 0">
+      <div style="font-size:13px;color:#555;margin-bottom:8px">请添加 QQ 客服完成支付</div>
+      <a href="https://wpa.qq.com/msgrd?v=3&uin=690913714&site=timzoo&menu=yes" target="_blank"
+         style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:linear-gradient(135deg,#12B7F5,#09A5EB);color:#fff;border-radius:25px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(18,183,245,0.35)">
+        <span>📱</span> 联系 QQ 客服
+      </a>
+      <div style="margin-top:12px;font-size:22px;font-weight:700;color:#12B7F5;letter-spacing:2px">👉 690913714 👈</div>
+    </div>
+    <div style="background:#F5F5F5;border-radius:10px;padding:12px 16px;margin-top:10px">
+      <div style="font-size:12px;color:#888;line-height:1.6">
+        💡 告知客服您想开通的套餐，支付后我们会立即为您激活 VIP。
+      </div>
+    </div>
+    <button class="btn-upgrade-vip" onclick="closeVipQqModal()" style="margin-top:16px;background:#999">关闭</button>
   </div>
 </div>
 
@@ -1635,30 +1698,43 @@ function updateVipUI() {
 
   const isVip = isUserVip(user);
 
+  // 计算是否即将到期（30天内）
+  let isExpiringSoon = false;
+  let daysLeft = Infinity;
+  if (user.memberExpire && isVip) {
+    const now = new Date();
+    const expireDate = new Date(user.memberExpire);
+    daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+    if (daysLeft <= 30 && daysLeft > 0) isExpiringSoon = true;
+  }
+
   // 更新"我的"页面VIP Banner
   const banner = document.getElementById('profile-vip-banner');
   if (banner) {
     if (isVip) {
-      let expireText;
-      if (!user.memberExpire || user.memberExpire === '2099-12-01' || user.memberExpire === '2099-12-31') {
-        expireText = '永久有效';
+      const expireText = user.memberExpire ? '有效期至：' + user.memberExpire : 'VIP会员';
+      const displaySub = isExpiringSoon ? `⏰ ${daysLeft}天后到期，请及时续费` : expireText;
+      document.getElementById('vip-banner-title').textContent = isExpiringSoon ? '🌟 VIP 即将到期' : '🌟 VIP会员';
+      document.getElementById('vip-banner-sub').textContent = displaySub;
+      document.getElementById('vip-banner-btn').textContent = isExpiringSoon ? '续费' : '已开通';
+      if (isExpiringSoon) {
+        document.getElementById('vip-banner-btn').style.background = 'linear-gradient(135deg, #FF6B35, #FF8C42)';
+        document.getElementById('vip-banner-btn').onclick = function(e){ e.stopPropagation(); openVipModal(); };
       } else {
-        expireText = user.memberExpire || 'VIP会员';
+        document.getElementById('vip-banner-btn').style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+        document.getElementById('vip-banner-btn').onclick = null;
       }
-      document.getElementById('vip-banner-title').textContent = '🌟 VIP会员';
-      document.getElementById('vip-banner-sub').textContent = expireText;
-      document.getElementById('vip-banner-btn').textContent = '已开通';
-      document.getElementById('vip-banner-btn').style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
       document.getElementById('vip-banner-btn').style.color = '#fff';
-      document.getElementById('vip-banner-btn').style.boxShadow = '0 4px 12px rgba(46, 204, 113, 0.4)';
+      document.getElementById('vip-banner-btn').style.boxShadow = isExpiringSoon
+        ? '0 4px 12px rgba(255,107,53,0.4)' : '0 4px 12px rgba(46,204,113,0.4)';
       banner.classList.add('vip-active');
       // 更新特权标签
       const vipTags = document.getElementById('vip-tags');
       if (vipTags) {
         vipTags.innerHTML = `
-          <span style="background:rgba(46,204,113,0.2);padding:4px 10px;border-radius:10px;font-size:11px;color:#2ecc71;border:1px solid rgba(46,204,113,0.3)">✅ 无限记录</span>
-          <span style="background:rgba(46,204,113,0.2);padding:4px 10px;border-radius:10px;font-size:11px;color:#2ecc71;border:1px solid rgba(46,204,113,0.3)">🌟 高级特权</span>
-          <span style="background:rgba(46,204,113,0.2);padding:4px 10px;border-radius:10px;font-size:11px;color:#2ecc71;border:1px solid rgba(46,204,113,0.3)">🎁 已解锁</span>
+          <span style="background:${isExpiringSoon?'rgba(255,107,53,0.2)':'rgba(46,204,113,0.2)'};padding:4px 10px;border-radius:10px;font-size:11px;color:${isExpiringSoon?'#FF6B35':'#2ecc71'};border:1px solid ${isExpiringSoon?'rgba(255,107,53,0.3)':'rgba(46,204,113,0.3)'}">✅ 无限记录</span>
+          <span style="background:${isExpiringSoon?'rgba(255,107,53,0.2)':'rgba(46,204,113,0.2)'};padding:4px 10px;border-radius:10px;font-size:11px;color:${isExpiringSoon?'#FF6B35':'#2ecc71'};border:1px solid ${isExpiringSoon?'rgba(255,107,53,0.3)':'rgba(46,204,113,0.3)'}">🌟 高级特权</span>
+          <span style="background:${isExpiringSoon?'rgba(255,107,53,0.2)':'rgba(46,204,113,0.2)'};padding:4px 10px;border-radius:10px;font-size:11px;color:${isExpiringSoon?'#FF6B35':'#2ecc71'};border:1px solid ${isExpiringSoon?'rgba(255,107,53,0.3)':'rgba(46,204,113,0.3)'}">${isExpiringSoon?'⏰ 即将到期':'🎁 已解锁'}</span>
         `;
       }
     } else {
@@ -1685,10 +1761,10 @@ function updateVipUI() {
   const menuVipLabel = document.getElementById('menu-vip-label');
   if (menuVipLabel) {
     if (isVip) {
-      const expireText = user.memberExpire && user.memberExpire !== '2099-12-31' ? '有效期至：' + user.memberExpire : '永久VIP';
+      const expireText = user.memberExpire ? '有效期至：' + user.memberExpire : 'VIP会员';
       menuVipLabel.innerHTML = `<span style="color:#FF8C00">👑 ${expireText}</span>`;
     } else {
-      menuVipLabel.textContent = '升级VIP会员';
+      menuVipLabel.innerHTML = '<span style="color:#FF8C00">升级VIP</span>';
     }
   }
   
@@ -1705,21 +1781,91 @@ function updateVipUI() {
   }
 }
 
-// 打开VIP弹窗（注册即VIP，仅展示状态）
+// 打开VIP弹窗（显示套餐选择+到期提醒）
 function openVipModal() {
   const user = Api.getUser();
   if (!user) return;
 
   const modal = document.getElementById('vip-modal');
   const statusEl = document.getElementById('vip-modal-status');
+  const warningEl = document.getElementById('vip-expire-warning');
+  const plansContainer = document.getElementById('vip-plans-container');
+  const confirmBtn = document.getElementById('btn-upgrade-confirm');
 
-  // 注册即VIP，直接展示会员状态
-  const expireText = user.memberExpire && user.memberExpire !== '2099-12-01' && user.memberExpire !== '2099-12-31'
-    ? '您的VIP有效期至：' + user.memberExpire
-    : '您已是永久VIP会员';
-  statusEl.textContent = expireText;
+  // 判断VIP状态
+  const isVip = isUserVip(user);
+  if (isVip && user.memberExpire) {
+    const now = new Date();
+    const expireDate = new Date(user.memberExpire);
+    const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+
+    statusEl.textContent = '您的VIP有效期至：' + user.memberExpire;
+    statusEl.style.display = 'block';
+
+    // 到期前1个月显示续费提醒
+    if (daysLeft <= 30 && daysLeft > 0) {
+      warningEl.style.display = 'block';
+      document.getElementById('vip-expire-warning-text').textContent =
+        `还剩 ${daysLeft} 天到期，请尽快续费以免影响使用`;
+      plansContainer.style.display = 'none';
+      confirmBtn.textContent = '立即续费 →';
+      confirmBtn.onclick = function() { showUpgradePlans(); };
+      confirmBtn.style.display = 'block';
+    } else {
+      warningEl.style.display = 'none';
+      plansContainer.style.display = 'block';
+      confirmBtn.textContent = '联系客服开通/续费';
+      confirmBtn.onclick = function() { handleVipUpgrade(); };
+      confirmBtn.style.display = 'block';
+    }
+  } else {
+    // 未开通或已过期
+    statusEl.textContent = isVip ? '您是永久VIP会员' : '开通VIP，享受更多特权';
+    statusEl.style.display = 'block';
+    warningEl.style.display = 'none';
+    plansContainer.style.display = 'block';
+    confirmBtn.textContent = '联系客服开通';
+    confirmBtn.onclick = function() { handleVipUpgrade(); };
+    confirmBtn.style.display = 'block';
+  }
+
+  // 默认选中年卡
+  selectVipPlan('year');
 
   modal.classList.add('show');
+}
+
+// 选择套餐
+let selectedVipPlan = 'year';
+
+function selectVipPlan(plan) {
+  selectedVipPlan = plan;
+  document.querySelectorAll('.vip-plan').forEach(function(el) {
+    el.classList.remove('selected');
+    if (el.dataset.plan === plan) el.classList.add('selected');
+  });
+}
+
+// 展开套餐选择（从到期警告按钮触发）
+function showUpgradePlans() {
+  document.getElementById('vip-expire-warning').style.display = 'none';
+  document.getElementById('vip-plans-container').style.display = 'block';
+  document.getElementById('btn-upgrade-confirm').textContent = '联系客服开通/续费';
+  document.getElementById('btn-upgrade-confirm').onclick = function() { handleVipUpgrade(); };
+}
+
+// 点击"联系客服开通"→ 弹出QQ客服弹窗
+function handleVipUpgrade() {
+  var planNames = { month: '月卡 ¥2.9', year: '年卡 ¥29（推荐）', forever: '终身 ¥99' };
+  document.getElementById('vip-qq-plan-text').textContent =
+    '您选择了「' + (planNames[selectedVipPlan] || '年卡 ¥29') + '」';
+  closeVipModalDirect();
+  document.getElementById('vip-qq-modal').classList.add('show');
+}
+
+// 关闭QQ弹窗
+function closeVipQqModal() {
+  document.getElementById('vip-qq-modal').classList.remove('show');
 }
 
 // 关闭VIP弹窗
@@ -1735,10 +1881,10 @@ function closeVipModalDirect() {
 function showVipSuccessModal(data) {
   const modal = document.getElementById('vip-success-modal');
   let expireText = '';
-  if (!data.expireAt || data.expireAt === '2099-12-31' || data.expireAt === '2099-12-01') {
-    expireText = '✨ 您已获得永久VIP会员资格！';
+  if (data.expireAt) {
+    expireText = `📅 VIP有效期至：${data.expireAt}`;
   } else {
-    expireText = `📅 有效期至：${data.expireAt}`;
+    expireText = '🎉 您的VIP已开通！';
   }
   document.getElementById('vip-success-expire').textContent = expireText;
   modal.classList.add('show');
