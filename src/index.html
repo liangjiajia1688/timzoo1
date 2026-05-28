@@ -834,6 +834,29 @@
   </div>
 </div>
 
+<!-- VIP到期自动提醒弹窗 -->
+<div class="pay-modal" id="vip-expire-reminder">
+  <div class="pay-modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <div style="font-size:48px;margin-bottom:8px">⏰</div>
+      <div class="modal-title" style="color:#FF6B35">VIP 即将到期</div>
+    </div>
+    <div style="background:#FFF3E0;border-radius:12px;padding:18px;text-align:center;margin:14px 0;border:1px solid #FFE0B2">
+      <div style="font-size:15px;color:#E65100;line-height:1.8">
+        您的 VIP 会员将于<br>
+        <span style="font-size:18px;font-weight:700;color:#FF6B35" id="vip-expire-remind-date"></span><br>
+        到期，还剩 <b style="font-size:22px;color:#D84315" id="vip-expire-remind-days">0</b> 天
+      </div>
+    </div>
+    <div style="font-size:13px;color:#888;text-align:center;line-height:1.6;margin-bottom:8px">
+      到期后将无法享受 VIP 特权，请及时续费哦～
+    </div>
+    <button class="btn-upgrade-vip" onclick="closeVipExpireReminder();openVipModal()">🔔 立即续费升级</button>
+    <button class="vip-modal-close" onclick="closeVipExpireReminder()">暂不续费</button>
+  </div>
+</div>
+
 <!-- QQ客服弹窗 -->
 <div class="pay-modal" id="vip-qq-modal">
   <div class="pay-modal-sheet" onclick="event.stopPropagation()">
@@ -1088,6 +1111,7 @@ function enterApp(user) {
   document.getElementById('main-app').style.display = '';
   updateUserUI(user);
   updateVipUI();
+  checkVipExpiringReminder(user);  // 自动检测VIP到期提醒
   goPage('home');
   refreshHome();
 }
@@ -1779,6 +1803,27 @@ function updateVipUI() {
       profileRole.innerHTML = '普通用户 <span class="vip-badge normal" style="margin-left:4px;cursor:pointer" onclick="openVipModal()">升级</span>';
     }
   }
+}
+
+// VIP到期自动提醒（距到期≤30天弹窗）
+function checkVipExpiringReminder(user) {
+  if (!user || !user.memberExpire) return;
+  var isVip = user.memberType === 'vip';
+  if (!isVip) return;
+  var now = new Date();
+  var expireDate = new Date(user.memberExpire);
+  var daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+  // 到期前30天内提醒
+  if (daysLeft <= 30 && daysLeft > 0) {
+    document.getElementById('vip-expire-remind-days').textContent = daysLeft;
+    document.getElementById('vip-expire-remind-date').textContent = user.memberExpire;
+    document.getElementById('vip-expire-reminder').classList.add('show');
+  }
+}
+
+// 关闭到期提醒弹窗
+function closeVipExpireReminder() {
+  document.getElementById('vip-expire-reminder').classList.remove('show');
 }
 
 // 打开VIP弹窗（显示套餐选择+到期提醒）
