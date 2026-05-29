@@ -807,17 +807,17 @@
     <div id="vip-plans-container">
       <div class="vip-plans">
         <div class="vip-plan" data-plan="month" onclick="selectVipPlan('month')">
-          <div class="vip-plan-price">¥2.9</div>
+          <div class="vip-plan-price">¥1.9</div>
           <div class="vip-plan-period">30天有效</div>
           <div class="vip-plan-name">月卡</div>
         </div>
         <div class="vip-plan selected vip-plan-recommended" data-plan="year" onclick="selectVipPlan('year')">
-          <div class="vip-plan-price">¥29</div>
+          <div class="vip-plan-price">¥9.9</div>
           <div class="vip-plan-period">365天有效</div>
           <div class="vip-plan-name">年卡（推荐）</div>
         </div>
         <div class="vip-plan" data-plan="forever" onclick="selectVipPlan('forever')">
-          <div class="vip-plan-price">¥99</div>
+          <div class="vip-plan-price">¥29.9</div>
           <div class="vip-plan-period">永久有效</div>
           <div class="vip-plan-name">终身会员</div>
         </div>
@@ -854,6 +854,19 @@
     </div>
     <button class="btn-upgrade-vip" onclick="closeVipExpireReminder();openVipModal()">🔔 立即续费升级</button>
     <button class="vip-modal-close" onclick="closeVipExpireReminder()">暂不续费</button>
+  </div>
+</div>
+
+<!-- 记录提醒弹窗（3天出片 / 30天收款） -->
+<div class="pay-modal" id="record-reminder-modal">
+  <div class="pay-modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <div style="font-size:40px;margin-bottom:4px">📋</div>
+      <div class="modal-title" id="record-reminder-title">待办提醒</div>
+    </div>
+    <div id="record-reminder-list" style="max-height:320px;overflow-y:auto;padding:4px 0"></div>
+    <button class="btn-upgrade-vip" onclick="closeRecordReminder()" style="margin-top:8px">知道了 👍</button>
   </div>
 </div>
 
@@ -1378,6 +1391,7 @@ async function refreshHome() {
     const records = await Api.getRecords({});
     let myRecords = records.filter(r => r.userId === user.id);
     myRecords.sort((a,b) => b.date.localeCompare(a.date));
+    checkRecordReminders(myRecords);  // 检查3天出片 / 30天收款提醒
 
     // ---- 首页筛选过滤 ----
     // 兼容旧数据：type 为空时默认为 explore
@@ -1826,6 +1840,81 @@ function closeVipExpireReminder() {
   document.getElementById('vip-expire-reminder').classList.remove('show');
 }
 
+// 检查记录提醒：3天后提醒出片发片，30天后提醒收款
+function checkRecordReminders(records) {
+  if (!records || records.length === 0) return;
+  var reminded = (function() {
+    try { return JSON.parse(localStorage.getItem('reminded_records') || '{}'); }
+    catch(e) { return {}; }
+  })();
+  var reminders = [];
+  var now = new Date();
+
+  records.forEach(function(r) {
+    // 仅探店/品宣类型触发提醒
+    if (r.type === 'rest' || r.type === 'holiday') return;
+    // 优先用 createdAt，回退 date
+    var createdStr = r.createdAt || r.date;
+    if (!createdStr) return;
+    var created = new Date(createdStr);
+    if (isNaN(created.getTime())) return;
+    var daysSince = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+
+    // 3天后提醒出片发片（仅未出片）
+    var photoKey = r.id + '_photo';
+    if (daysSince >= 3 && r.photoStatus === 'pending_shoot' && !reminded[photoKey]) {
+      reminders.push({
+        id: r.id, storeName: r.storeName || (r.notes || r.date),
+        type: 'photo', message: '该出片发片了！📸', days: daysSince, key: photoKey
+      });
+    }
+    // 30天后提醒收款（仅未收款）
+    var feeKey = r.id + '_fee';
+    if (daysSince >= 30 && r.feeStatus === 'pending_fee' && !reminded[feeKey]) {
+      reminders.push({
+        id: r.id, storeName: r.storeName || (r.notes || r.date),
+        type: 'fee', message: '该收款了！💰', days: daysSince, key: feeKey
+      });
+    }
+  });
+
+  if (reminders.length === 0) return;
+
+  // 显示弹窗
+  var title = document.getElementById('record-reminder-title');
+  var list = document.getElementById('record-reminder-list');
+  title.textContent = '📋 待办提醒（' + reminders.length + '条）';
+
+  list.innerHTML = reminders.map(function(item) {
+    var icon = item.type === 'photo' ? '📸' : '💰';
+    var tagColor = item.type === 'photo' ? '#E65100' : '#C62828';
+    var bgColor = item.type === 'photo' ? '#FFF3E0' : '#FFEBEE';
+    var borderColor = item.type === 'photo' ? '#FFE0B2' : '#FFCDD2';
+    return '<div data-key="' + item.key + '" style="background:' + bgColor +
+      ';border-radius:10px;padding:12px 14px;margin:8px 0;border:1px solid ' + borderColor + '">' +
+      '<div style="font-size:14px;font-weight:600;color:#333">' + icon + ' ' + item.storeName + '</div>' +
+      '<div style="font-size:12px;color:' + tagColor + ';margin-top:4px">⏰ ' + item.days + '天前 — ' + item.message + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('record-reminder-modal').classList.add('show');
+}
+
+function closeRecordReminder() {
+  // 标记已显示的提醒为已读
+  var reminded = (function() {
+    try { return JSON.parse(localStorage.getItem('reminded_records') || '{}'); }
+    catch(e) { return {}; }
+  })();
+  var items = document.querySelectorAll('#record-reminder-list > div[data-key]');
+  items.forEach(function(el) {
+    var key = el.getAttribute('data-key');
+    if (key) reminded[key] = true;
+  });
+  localStorage.setItem('reminded_records', JSON.stringify(reminded));
+  document.getElementById('record-reminder-modal').classList.remove('show');
+}
+
 // 打开VIP弹窗（显示套餐选择+到期提醒）
 function openVipModal() {
   const user = Api.getUser();
@@ -1901,9 +1990,9 @@ function showUpgradePlans() {
 
 // 点击"联系客服开通"→ 弹出QQ客服弹窗
 function handleVipUpgrade() {
-  var planNames = { month: '月卡 ¥2.9', year: '年卡 ¥29（推荐）', forever: '终身 ¥99' };
+  var planNames = { month: '月卡 ¥1.9', year: '年卡 ¥9.9（推荐）', forever: '终身 ¥29.9' };
   document.getElementById('vip-qq-plan-text').textContent =
-    '您选择了「' + (planNames[selectedVipPlan] || '年卡 ¥29') + '」';
+    '您选择了「' + (planNames[selectedVipPlan] || '年卡 ¥9.9') + '」';
   closeVipModalDirect();
   document.getElementById('vip-qq-modal').classList.add('show');
 }
