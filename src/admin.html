@@ -1131,7 +1131,7 @@ function renderUsersTable() {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="11"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
   } else {
     tbody.innerHTML = pageUsers.map((u, i) => {
-      const globalIndex = start + i + 1;  // 最新用户=序号1，依次递增
+      const globalIndex = users.length - start - i;  // 最老用户(底部)=1，往上递增
       const cnt = records.filter(r => r.userId === u.id).length;
       const initial = (u.realname||u.username).slice(-1);
       const isVip = u.memberType === 'vip';
