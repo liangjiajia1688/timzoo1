@@ -141,10 +141,19 @@ async function handleRegister(req, env) {
   }
 
   const userId = 'user_' + Date.now();
-  // 注册即送 VIP，有效期 1 年
-  const now = new Date();
-  now.setFullYear(now.getFullYear() + 1);
-  const expireStr = now.toISOString().split('T')[0];
+
+  // 前100名注册用户免费送终身永久会员，101名后送1年会员
+  const countResult = await env.DB.prepare(
+    "SELECT COUNT(*) as cnt FROM users"
+  ).first();
+  const totalUsers = countResult ? Number(countResult.cnt) : 0;
+  const isFirst100 = totalUsers < 100;
+
+  const expireStr = isFirst100 ? '2099-12-01' : (function() {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString().split('T')[0];
+  })();
 
   // 确保 platform 列存在（首次运行时添加）
   try {
@@ -325,7 +334,7 @@ async function handleVipActivate(req, env, userId, user) {
 
 async function handleAdminUsers(env) {
   const results = await env.DB.prepare(
-    "SELECT id, username, realname, platform, role, memberType, memberExpire, phone, createdAt FROM users ORDER BY createdAt DESC"
+    "SELECT id, username, realname, platform, role, memberType, memberExpire, phone, createdAt FROM users ORDER BY createdAt ASC"
   ).all();
   return json({ success: true, users: results.results || [] });
 }
