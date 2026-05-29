@@ -819,7 +819,7 @@ async function refreshDashboard() {
     const records = (recordsRes.records || []).filter(r =>
       r.date && r.date.startsWith(selectedMonth)
     );
-    records.sort((a, b) => (a.date||'').localeCompare(b.date||''));
+    records.sort((a, b) => (b.date||'').localeCompare(a.date||''));
 
     const tbody = document.getElementById('dashboard-table');
     if (records.length === 0) {
