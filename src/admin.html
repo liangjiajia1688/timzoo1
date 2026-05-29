@@ -315,6 +315,7 @@
           </thead>
           <tbody id="dashboard-table"></tbody>
         </table>
+        <div class="pagination" id="dash-pagination"></div>
       </div>
     </div>
 
@@ -677,6 +678,9 @@ let recPage = 1;
 const REC_PER_PAGE = 15;
 let userPage = 1;
 const USER_PER_PAGE = 10;
+let dashPage = 1;
+let dashRecords = [];
+const DASH_PER_PAGE = 100;
 let filteredRecs = [];
 let currentFilterUserId = '';
 let editingRecId = null;
@@ -816,38 +820,60 @@ async function refreshDashboard() {
     ).join('');
 
     // Dashboard table
-    const records = (recordsRes.records || []).filter(r =>
+    dashRecords = (recordsRes.records || []).filter(r =>
       r.date && r.date.startsWith(selectedMonth)
     );
-    records.sort((a, b) => (b.date||'').localeCompare(a.date||''));
-
-    const tbody = document.getElementById('dashboard-table');
-    if (records.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="9"><span class="empty-icon">📋</span>本月暂无探店记录</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = records.map((r, i) => {
-      const userName = r.username || (r.realname || '-');
-      return `<tr>
-        <td>${i+1}</td>
-        <td>${r.date||'-'}</td>
-        <td><b>${r.storeName||'-'}</b></td>
-        <td>¥${r.fee||0}</td>
-        <td><b>¥${r.actualAmount||0}</b></td>
-        <td>${r.feeStatus==='settled'?'<span class="badge badge-success">✓ 已收款</span>':'<span class="badge badge-danger">未收款</span>'}</td>
-        <td>${r.photoStatus==='published'||r.photoStatus==='photo-done'||r.photoStatus==='done'?'<span class="badge badge-success">已出片</span>':'<span class="badge badge-warning">待出片</span>'}</td>
-        <td>${userName}</td>
-        <td>${r.notes||'-'}</td>
-      </tr>`;
-    }).join('');
+    dashRecords.sort((a, b) => (b.date||'').localeCompare(a.date||''));
+    dashPage = 1;
+    renderDashboardTable();
 
   } catch (err) {
     showToast('加载仪表盘数据失败：' + err.message);
     document.getElementById('dashboard-table').innerHTML =
       `<tr class="empty-row"><td colspan="9"><span class="empty-icon">⚠️</span>${err.message}</td></tr>`;
+    document.getElementById('dash-pagination').innerHTML = '';
   }
 }
+
+function renderDashboardTable() {
+  const tbody = document.getElementById('dashboard-table');
+  const total = dashRecords.length;
+
+  if (total === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9"><span class="empty-icon">📋</span>本月暂无探店记录</td></tr>`;
+    document.getElementById('dash-pagination').innerHTML = '';
+    return;
+  }
+
+  const start = (dashPage - 1) * DASH_PER_PAGE;
+  const pageRecords = dashRecords.slice(start, start + DASH_PER_PAGE);
+  const globalStart = total - start;  // 倒序序号起点
+
+  tbody.innerHTML = pageRecords.map((r, i) => {
+    const userName = r.username || (r.realname || '-');
+    return `<tr>
+      <td>${globalStart - i}</td>
+      <td>${r.date||'-'}</td>
+      <td><b>${r.storeName||'-'}</b></td>
+      <td>¥${r.fee||0}</td>
+      <td><b>¥${r.actualAmount||0}</b></td>
+      <td>${r.feeStatus==='settled'?'<span class="badge badge-success">✓ 已收款</span>':'<span class="badge badge-danger">未收款</span>'}</td>
+      <td>${r.photoStatus==='published'||r.photoStatus==='photo-done'||r.photoStatus==='done'?'<span class="badge badge-success">已出片</span>':'<span class="badge badge-warning">待出片</span>'}</td>
+      <td>${userName}</td>
+      <td>${r.notes||'-'}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const totalPages = Math.ceil(total / DASH_PER_PAGE) || 1;
+  const pag = document.getElementById('dash-pagination');
+  pag.innerHTML = `<span class="page-info">共 ${total} 条</span>`;
+  for (let i = 1; i <= totalPages; i++) {
+    pag.innerHTML += `<button class="page-btn ${i===dashPage?'active':''}" onclick="goDashPage(${i})">${i}</button>`;
+  }
+}
+
+function goDashPage(p) { dashPage = p; renderDashboardTable(); }
 
 function selectMonth(m) { selectedMonth = m; refreshDashboard(); }
 
