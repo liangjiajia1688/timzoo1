@@ -437,6 +437,7 @@
           </thead>
           <tbody id="users-table"></tbody>
         </table>
+        <div id="user-pagination" style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap"></div>
       </div>
     </div>
   </div>
@@ -674,6 +675,8 @@ let allRecordsCache = [];     // 记录列表缓存
 let selectedMonth = '';
 let recPage = 1;
 const REC_PER_PAGE = 15;
+let userPage = 1;
+const USER_PER_PAGE = 10;
 let filteredRecs = [];
 let currentFilterUserId = '';
 let editingRecId = null;
@@ -1110,13 +1113,25 @@ async function refreshUsers() {
     const records = recRes.records || [];
     allRecordsCache = records;
 
-    const tbody = document.getElementById('users-table');
-    if (users.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="11"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
-      return;
-    }
+    userPage = 1;  // 每次刷新回第1页
+    renderUsersTable();
+  } catch (err) {
+    showToast('加载用户列表失败：' + err.message);
+  }
+}
 
-    tbody.innerHTML = users.map((u, i) => {
+function renderUsersTable() {
+  const users = allUsersCache;
+  const records = allRecordsCache;
+  const start = (userPage - 1) * USER_PER_PAGE;
+  const pageUsers = users.slice(start, start + USER_PER_PAGE);
+  const tbody = document.getElementById('users-table');
+
+  if (pageUsers.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="11"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
+  } else {
+    tbody.innerHTML = pageUsers.map((u, i) => {
+      const globalIndex = start + i + 1;  // 全局序号
       const cnt = records.filter(r => r.userId === u.id).length;
       const initial = (u.realname||u.username).slice(-1);
       const isVip = u.memberType === 'vip';
@@ -1129,7 +1144,7 @@ async function refreshUsers() {
         ? `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#EEF4FF;color:#1976D2">${u.platform}</span>`
         : '<span style="color:#999;font-size:12px">-</span>';
       return `<tr>
-        <td style="color:#999;font-size:13px;font-weight:600">${i+1}</td>
+        <td style="color:#999;font-size:13px;font-weight:600">${globalIndex}</td>
         <td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar">${initial}</div><span>${u.realname||'-'}</span></div></td>
         <td>${u.realname||'-'}</td>
         <td>${platformBadge}</td>
@@ -1146,10 +1161,18 @@ async function refreshUsers() {
         </td>
       </tr>`;
     }).join('');
-  } catch (err) {
-    showToast('加载用户列表失败：' + err.message);
+  }
+
+  // 渲染分页按钮
+  const totalPages = Math.ceil(users.length / USER_PER_PAGE) || 1;
+  const pag = document.getElementById('user-pagination');
+  pag.innerHTML = `<span class="page-info">共 ${users.length} 个用户</span>`;
+  for (let i = 1; i <= totalPages; i++) {
+    pag.innerHTML += `<button class="page-btn ${i===userPage?'active':''}" onclick="goUserPage(${i})">${i}</button>`;
   }
 }
+
+function goUserPage(p) { userPage = p; renderUsersTable(); }
 
 function openAddUserModal() {
   editingUserId = null;
