@@ -433,7 +433,7 @@
         </div>
         <table>
           <thead>
-            <tr><th>用户</th><th>平台昵称</th><th>主做平台</th><th>用户名</th><th>角色</th><th>会员等级</th><th>到期时间</th><th>探店数</th><th>注册时间</th><th>操作</th></tr>
+            <tr><th>序号</th><th>用户</th><th>平台昵称</th><th>主做平台</th><th>用户名</th><th>角色</th><th>会员等级</th><th>到期时间</th><th>探店数</th><th>注册时间</th><th>操作</th></tr>
           </thead>
           <tbody id="users-table"></tbody>
         </table>
@@ -1112,11 +1112,11 @@ async function refreshUsers() {
 
     const tbody = document.getElementById('users-table');
     if (users.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="10"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="11"><span class="empty-icon">👤</span>暂无用户</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = users.map(u => {
+    tbody.innerHTML = users.map((u, i) => {
       const cnt = records.filter(r => r.userId === u.id).length;
       const initial = (u.realname||u.username).slice(-1);
       const isVip = u.memberType === 'vip';
@@ -1129,6 +1129,7 @@ async function refreshUsers() {
         ? `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#EEF4FF;color:#1976D2">${u.platform}</span>`
         : '<span style="color:#999;font-size:12px">-</span>';
       return `<tr>
+        <td style="color:#999;font-size:13px;font-weight:600">${i+1}</td>
         <td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar">${initial}</div><span>${u.realname||'-'}</span></div></td>
         <td>${u.realname||'-'}</td>
         <td>${platformBadge}</td>
