@@ -514,7 +514,7 @@
         <label class="form-label">出片状态</label>
         <select class="form-input" id="rm-photo-status">
           <option value="pending_shoot">待拍摄</option>
-          <option value="photo-done">已完成</option>
+          <option value="published">已出片</option>
         </select>
       </div>
     </div>
@@ -836,7 +836,7 @@ async function refreshDashboard() {
         <td>¥${r.fee||0}</td>
         <td><b>¥${r.actualAmount||0}</b></td>
         <td>${r.feeStatus==='settled'?'<span class="badge badge-success">✓ 已收款</span>':'<span class="badge badge-danger">未收款</span>'}</td>
-        <td>${r.photoStatus==='photo-done'||r.photoStatus==='done'?'<span class="badge badge-success">已出片</span>':'<span class="badge badge-warning">待出片</span>'}</td>
+        <td>${r.photoStatus==='published'||r.photoStatus==='photo-done'||r.photoStatus==='done'?'<span class="badge badge-success">已出片</span>':'<span class="badge badge-warning">待出片</span>'}</td>
         <td>${userName}</td>
         <td>${r.notes||'-'}</td>
       </tr>`;
@@ -934,7 +934,7 @@ function renderRecordsTable() {
         <td>¥${r.fee||0}</td>
         <td>¥${r.actualAmount||0}</td>
         <td>${r.feeStatus==='settled'?'<span class="badge badge-success">已收款</span>':'<span class="badge badge-danger">未收款</span>'}</td>
-        <td>${r.photoStatus==='photo-done'||r.photoStatus==='done'?'<span class="badge badge-success">已出片</span>':'<span class="badge badge-warning">待出片</span>'}</td>
+        <td>${r.photoStatus==='published'||r.photoStatus==='photo-done'||r.photoStatus==='done'?'<span class="badge badge-success">已出片</span>':'<span class="badge badge-warning">待出片</span>'}</td>
         <td>${userName}</td>
         <td>
           <button class="btn-icon btn-edit-sm" onclick="openEditRecordModal('${r.id}')">编辑</button>
@@ -1422,7 +1422,7 @@ function doAdminExport() {
       r.fee || 0,
       r.actualAmount || 0,
       r.feeStatus === 'settled' ? '已收款' : '未收款',
-      (r.photoStatus === 'photo-done' || r.photoStatus === 'done') ? '已出片' : '待出片',
+      (r.photoStatus === 'published' || r.photoStatus === 'photo-done' || r.photoStatus === 'done') ? '已出片' : '待出片',
       userName,
       (r.notes || '').replace(/,/g, '；'), // 避免 CSV 逗号冲突
     ];
