@@ -334,7 +334,7 @@ async function handleVipActivate(req, env, userId, user) {
 
 async function handleAdminUsers(env) {
   const results = await env.DB.prepare(
-    "SELECT id, username, realname, platform, role, memberType, memberExpire, phone, createdAt FROM users ORDER BY createdAt ASC"
+    "SELECT id, username, realname, platform, role, memberType, memberExpire, phone, createdAt FROM users ORDER BY createdAt DESC"
   ).all();
   return json({ success: true, users: results.results || [] });
 }
